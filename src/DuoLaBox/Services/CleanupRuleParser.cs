@@ -73,6 +73,11 @@ internal static class CleanupRuleParser
     private static bool TryPrepareCore(string rule, out PreparedCleanupRule prepared)
     {
         prepared = default!;
+        // Reject invalid characters before Windows environment expansion can truncate at NUL.
+        if (rule.IndexOfAny(Path.GetInvalidPathChars()) >= 0)
+        {
+            return false;
+        }
         var expanded = ExpandPlaceholders(rule).Replace('/', '\\');
         if (!Path.IsPathFullyQualified(expanded) ||
             expanded.IndexOfAny(Path.GetInvalidPathChars()) >= 0)

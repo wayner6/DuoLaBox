@@ -129,7 +129,8 @@ internal static class StorageAndScanChecks
         var mixed = await service.ScanAsync(invalid + "\r\nrelative.tmp\r\n" + first);
         Assert(mixed.InvalidRuleCount == 2 && mixed.RecognizedRuleCount == 1 &&
                mixed.Candidates.Single().Path == first,
-            "Invalid rules aborted the scan or were not classified correctly.");
+            $"Invalid-rule scan: invalid={mixed.InvalidRuleCount}, recognized={mixed.RecognizedRuleCount}, " +
+            $"candidates={mixed.Candidates.Count}; invalid rules were not isolated.");
         var recursiveRule = scanDirectory + Path.DirectorySeparatorChar;
         var recursive = await service.ScanAsync(recursiveRule);
         Assert(recursive.Candidates.Count == 3, "Directory rule did not scan nested files.");
