@@ -1,0 +1,295 @@
+﻿<UserControl x:Class="DuoLaBox.Views.SystemToolsPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Foreground="{DynamicResource PrimaryTextBrush}">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="24"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <StackPanel>
+            <TextBlock FontSize="28"
+                       FontWeight="SemiBold"
+                       Text="系统修改"/>
+            <TextBlock Margin="0,7,0,0"
+                       Foreground="{DynamicResource SecondaryTextBrush}"
+                       Text="调整系统颜色模式、Hosts 文件与临时唤醒状态。"/>
+        </StackPanel>
+
+        <ScrollViewer Grid.Row="2"
+                      HorizontalScrollBarVisibility="Disabled"
+                      VerticalScrollBarVisibility="Auto">
+        <StackPanel>
+            <Border Padding="20,18"
+                    Background="{DynamicResource SurfaceBrush}"
+                    BorderBrush="{DynamicResource BorderBrush}"
+                    BorderThickness="1"
+                    CornerRadius="8">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="44"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <Border Width="36"
+                            Height="36"
+                            Background="{DynamicResource AccentSubtleBrush}"
+                            CornerRadius="18">
+                        <TextBlock HorizontalAlignment="Center"
+                                   VerticalAlignment="Center"
+                                   FontFamily="Segoe Fluent Icons"
+                                   FontSize="18"
+                                   Foreground="{DynamicResource AccentBrush}"
+                                   Text="&#xE708;"/>
+                    </Border>
+                    <StackPanel Grid.Column="1"
+                                Margin="8,0,0,0"
+                                VerticalAlignment="Center">
+                        <TextBlock FontSize="15"
+                                   FontWeight="SemiBold"
+                                   Text="系统夜间模式"/>
+                        <TextBlock x:Name="CurrentModeText"
+                                   Margin="0,5,0,0"
+                                   FontSize="12"
+                                   Foreground="{DynamicResource SecondaryTextBrush}"
+                                   Text="读取当前 Windows 颜色模式。"/>
+                    </StackPanel>
+                    <ToggleButton x:Name="NightModeToggle"
+                                  Grid.Column="2"
+                                  VerticalAlignment="Center"
+                                  Click="NightModeToggle_Click"
+                                  Content="关"
+                                  Style="{StaticResource SettingToggleStyle}"/>
+                </Grid>
+            </Border>
+
+            <Border Margin="0,12,0,0"
+                    Padding="20,18"
+                    Background="{DynamicResource SurfaceBrush}"
+                    BorderBrush="{DynamicResource BorderBrush}"
+                    BorderThickness="1"
+                    CornerRadius="8">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="16"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel VerticalAlignment="Center">
+                            <TextBlock FontSize="15"
+                                       FontWeight="SemiBold"
+                                       Text="定时计划"/>
+                            <TextBlock Margin="0,5,0,0"
+                                       FontSize="12"
+                                       Foreground="{DynamicResource SecondaryTextBrush}"
+                                       Text="应用在系统托盘运行时，计划仍然有效。"/>
+                        </StackPanel>
+                        <ToggleButton x:Name="ScheduleToggle"
+                                      Grid.Column="1"
+                                      VerticalAlignment="Center"
+                                      Click="ScheduleToggle_Click"
+                                      Content="关"
+                                      Style="{StaticResource SettingToggleStyle}"/>
+                    </Grid>
+
+                    <Border Grid.Row="2"
+                            Padding="16"
+                            Background="{DynamicResource WindowBackgroundBrush}"
+                            BorderBrush="{DynamicResource BorderBrush}"
+                            BorderThickness="1"
+                            CornerRadius="6">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="16"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <StackPanel VerticalAlignment="Center">
+                                    <TextBlock FontWeight="SemiBold"
+                                               Text="开启夜间模式"/>
+                                    <TextBlock Margin="0,4,0,0"
+                                               FontSize="12"
+                                               Foreground="{DynamicResource SecondaryTextBrush}"
+                                               Text="到达该时间后使用深色模式"/>
+                                </StackPanel>
+                                <TextBox x:Name="DarkStartTextBox"
+                                         Grid.Column="1"
+                                         Width="92"
+                                         MaxLength="5"
+                                         HorizontalContentAlignment="Center"
+                                         LostFocus="ScheduleTime_LostFocus"
+                                         PreviewKeyDown="ScheduleTime_PreviewKeyDown"
+                                         Style="{StaticResource SearchBoxStyle}"
+                                         ToolTip="输入 00:00 至 23:59"/>
+                            </Grid>
+
+                            <Grid Grid.Column="2">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <StackPanel VerticalAlignment="Center">
+                                    <TextBlock FontWeight="SemiBold"
+                                               Text="开启日间模式"/>
+                                    <TextBlock Margin="0,4,0,0"
+                                               FontSize="12"
+                                               Foreground="{DynamicResource SecondaryTextBrush}"
+                                               Text="到达该时间后使用浅色模式"/>
+                                </StackPanel>
+                                <TextBox x:Name="LightStartTextBox"
+                                         Grid.Column="1"
+                                         Width="92"
+                                         MaxLength="5"
+                                         HorizontalContentAlignment="Center"
+                                         LostFocus="ScheduleTime_LostFocus"
+                                         PreviewKeyDown="ScheduleTime_PreviewKeyDown"
+                                         Style="{StaticResource SearchBoxStyle}"
+                                         ToolTip="输入 00:00 至 23:59"/>
+                            </Grid>
+                        </Grid>
+                    </Border>
+                </Grid>
+            </Border>
+
+            <TextBlock Margin="2,22,0,9"
+                       FontSize="17"
+                       FontWeight="SemiBold"
+                       Text="保持唤醒"/>
+            <Border Margin="0,0,0,4"
+                    Padding="20,18"
+                    Background="{DynamicResource SurfaceBrush}"
+                    BorderBrush="{DynamicResource BorderBrush}"
+                    BorderThickness="1"
+                    CornerRadius="8">
+                <StackPanel>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel>
+                            <TextBlock FontSize="15"
+                                       FontWeight="SemiBold"
+                                       Text="临时保持电脑唤醒"/>
+                            <TextBlock Margin="0,5,0,0"
+                                       FontSize="12"
+                                       Foreground="{DynamicResource SecondaryTextBrush}"
+                                       Text="只阻止电脑睡眠，不修改电源计划；应用退出后自动恢复。"/>
+                        </StackPanel>
+                        <ToggleButton x:Name="KeepAwakeToggle"
+                                      Grid.Column="1"
+                                      Click="KeepAwakeToggle_Click"
+                                      Content="关"
+                                      Style="{StaticResource SettingToggleStyle}"/>
+                    </Grid>
+                    <Grid Margin="0,16,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel>
+                            <TextBlock FontWeight="SemiBold"
+                                       Text="同时保持屏幕常亮"/>
+                            <TextBlock Margin="0,4,0,0"
+                                       FontSize="12"
+                                       Foreground="{DynamicResource SecondaryTextBrush}"
+                                       Text="关闭此项时屏幕可以熄灭，下载和后台任务通常仍会继续。"/>
+                        </StackPanel>
+                        <ToggleButton x:Name="KeepDisplayToggle"
+                                      Grid.Column="1"
+                                      IsEnabled="False"
+                                      Click="KeepDisplayToggle_Click"
+                                      Content="关"
+                                      Style="{StaticResource SettingToggleStyle}"/>
+                    </Grid>
+                    <TextBlock x:Name="KeepAwakeStatusText"
+                               Margin="0,12,0,0"
+                               FontSize="12"
+                               Foreground="{DynamicResource SecondaryTextBrush}"
+                               Text="当前未保持唤醒。"/>
+                    <Border Margin="0,12,0,0"
+                            Padding="12,9"
+                            Background="{DynamicResource AccentSubtleBrush}"
+                            CornerRadius="6">
+                        <TextBlock FontSize="12"
+                                   Foreground="{DynamicResource SecondaryTextBrush}"
+                                   TextWrapping="Wrap"
+                                   Text="提示：电脑没有进入睡眠时，普通下载不会因为屏幕熄灭而暂停；软件自身的节能设置、网络中断或合盖策略仍可能影响任务。"/>
+                    </Border>
+                </StackPanel>
+            </Border>
+
+            <TextBlock Margin="2,22,0,9"
+                       FontSize="17"
+                       FontWeight="SemiBold"
+                       Text="Hosts 文件"/>
+            <Border Margin="0,0,0,4"
+                    Padding="20,18"
+                    Background="{DynamicResource SurfaceBrush}"
+                    BorderBrush="{DynamicResource BorderBrush}"
+                    BorderThickness="1"
+                    CornerRadius="8">
+                <StackPanel>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="8"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel>
+                            <TextBlock FontSize="15"
+                                       FontWeight="SemiBold"
+                                       Text="修改系统 Hosts 文件"/>
+                            <TextBlock Margin="0,5,0,0"
+                                       FontSize="12"
+                                       Foreground="{DynamicResource SecondaryTextBrush}"
+                                       Text="保存时会请求管理员权限，并先在原目录创建备份。"/>
+                        </StackPanel>
+                        <Button x:Name="HostsReloadButton" Grid.Column="1"
+                                Click="ReloadHostsButton_Click"
+                                Style="{StaticResource SecondaryButtonStyle}"
+                                Content="重新读取"/>
+                        <Button x:Name="HostsSaveButton" Grid.Column="3"
+                                Click="SaveHostsButton_Click"
+                                Style="{StaticResource SkyBlueButtonStyle}"
+                                Content="保存 Hosts"/>
+                    </Grid>
+                    <TextBox x:Name="HostsTextBox"
+                             Margin="0,14,0,0"
+                             MinHeight="190"
+                             Padding="12"
+                             AcceptsReturn="True"
+                             AcceptsTab="True"
+                             FontFamily="Consolas"
+                             FontSize="13"
+                             HorizontalScrollBarVisibility="Auto"
+                             VerticalScrollBarVisibility="Auto"
+                             VerticalContentAlignment="Top"
+                             TextWrapping="NoWrap"
+                             Style="{StaticResource SearchBoxStyle}"/>
+                    <TextBlock x:Name="HostsStatusText"
+                               Margin="2,9,0,0"
+                               FontSize="12"
+                               Foreground="{DynamicResource SecondaryTextBrush}"
+                               Text="尚未读取 Hosts 文件。"/>
+                </StackPanel>
+            </Border>
+        </StackPanel>
+        </ScrollViewer>
+    </Grid>
+</UserControl>
+

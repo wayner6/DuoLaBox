@@ -1,0 +1,502 @@
+<UserControl x:Class="DuoLaBox.Views.FileBatchPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Foreground="{DynamicResource PrimaryTextBrush}">
+    <UserControl.Resources>
+        <Style x:Key="EditorTextBoxStyle" TargetType="TextBox">
+            <Setter Property="Padding" Value="10,7"/>
+            <Setter Property="Background" Value="{DynamicResource WindowBackgroundBrush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource ControlBorderBrush}"/>
+            <Setter Property="CaretBrush" Value="{DynamicResource PrimaryTextBrush}"/>
+        </Style>
+        <Style x:Key="FileListStyle" TargetType="ListBox">
+            <Setter Property="Padding" Value="4"/>
+            <Setter Property="Background" Value="{DynamicResource WindowBackgroundBrush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
+            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+            <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Disabled"/>
+        </Style>
+    </UserControl.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="16"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="10"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="10"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <StackPanel>
+            <TextBlock FontSize="28"
+                       FontWeight="SemiBold"
+                       Text="文件批量处理"/>
+            <TextBlock Margin="0,7,0,0"
+                       Foreground="{DynamicResource SecondaryTextBrush}"
+                       Text="每项工具独立保存自己的文件列表，切换功能不会混用文件。"/>
+        </StackPanel>
+
+        <StackPanel x:Name="ModeButtonsPanel" Grid.Row="2" Orientation="Horizontal">
+            <Button x:Name="RenameModeButton"
+                    Click="RenameModeButton_Click"
+                    Style="{StaticResource SkyBlueButtonStyle}"
+                    Content="批量重命名"/>
+            <Button x:Name="UnlockModeButton"
+                    Margin="8,0,0,0"
+                    Click="UnlockModeButton_Click"
+                    Style="{StaticResource SecondaryButtonStyle}"
+                    Content="解除文件占用"/>
+            <Button x:Name="ResizeModeButton"
+                    Margin="8,0,0,0"
+                    Click="ResizeModeButton_Click"
+                    Style="{StaticResource SecondaryButtonStyle}"
+                    Content="调整图片尺寸"/>
+        </StackPanel>
+
+        <Border x:Name="FileSelectionPanel" Grid.Row="4"
+                Padding="12,10"
+                Background="{DynamicResource SurfaceBrush}"
+                BorderBrush="{DynamicResource BorderBrush}"
+                BorderThickness="1"
+                CornerRadius="8">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="7"/>
+                    <RowDefinition Height="76"/>
+                </Grid.RowDefinitions>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="8"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock x:Name="SelectedCountText"
+                               VerticalAlignment="Center"
+                               FontWeight="SemiBold"
+                               Text="批量重命名 · 已选择 0 个文件"/>
+                    <Button Grid.Column="1"
+                            Click="AddFilesButton_Click"
+                            Style="{StaticResource SecondaryButtonStyle}"
+                            Content="添加文件"/>
+                    <Button Grid.Column="3"
+                            Click="ClearFilesButton_Click"
+                            Style="{StaticResource SecondaryButtonStyle}"
+                            Content="清空"/>
+                </Grid>
+                <ListBox x:Name="SelectedFilesList"
+                         Grid.Row="2"
+                         SelectionChanged="SelectedFilesList_SelectionChanged"
+                         Style="{StaticResource FileListStyle}">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <Grid Margin="4,1">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="30"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock VerticalAlignment="Center"
+                                           Text="{Binding}"
+                                           TextTrimming="CharacterEllipsis"
+                                           ToolTip="{Binding}"/>
+                                <Button Grid.Column="1"
+                                        Width="26"
+                                        Height="26"
+                                        Padding="0"
+                                        Background="Transparent"
+                                        BorderThickness="0"
+                                        Click="RemoveFileButton_Click"
+                                        Cursor="Hand"
+                                        Foreground="{DynamicResource SecondaryTextBrush}"
+                                        FontFamily="Segoe Fluent Icons"
+                                        FontSize="12"
+                                        Tag="{Binding}"
+                                        ToolTip="从当前列表移除"
+                                        Content="&#xE711;"/>
+                            </Grid>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </Grid>
+        </Border>
+
+        <Border x:Name="FileOperationsPanel" Grid.Row="6"
+                Padding="16"
+                Background="{DynamicResource SurfaceBrush}"
+                BorderBrush="{DynamicResource BorderBrush}"
+                BorderThickness="1"
+                CornerRadius="8">
+            <ScrollViewer VerticalScrollBarVisibility="Auto"
+                          HorizontalScrollBarVisibility="Disabled">
+                <Grid>
+                    <Grid x:Name="RenamePanel">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="12"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="12"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="8"/>
+                            <RowDefinition Height="150"/>
+                            <RowDefinition Height="12"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel>
+                                <TextBlock FontSize="16"
+                                           FontWeight="SemiBold"
+                                           Text="批量重命名"/>
+                                <TextBlock Margin="0,5,0,0"
+                                           Foreground="{DynamicResource SecondaryTextBrush}"
+                                           Text="命名模板变化后会自动更新下方预览。"/>
+                            </StackPanel>
+                            <ToggleButton x:Name="RenameContextMenuButton"
+                                          Grid.Row="1"
+                                          Grid.ColumnSpan="2"
+                                          Margin="0,10,0,0"
+                                          HorizontalAlignment="Left"
+                                          Click="RenameContextMenuButton_Click"
+                                          Style="{StaticResource SettingToggleStyle}"
+                                          Content="添加批量重命名到鼠标右键菜单"/>
+                        </Grid>
+                        <Grid Grid.Row="2">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="16"/>
+                                <ColumnDefinition Width="100"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel>
+                                <TextBlock FontWeight="SemiBold" Text="命名模板"/>
+                                <TextBox x:Name="RenameTemplateTextBox"
+                                         Margin="0,6,0,0"
+                                         TextChanged="RenameInput_TextChanged"
+                                         Style="{StaticResource EditorTextBoxStyle}"
+                                         Text="{}{name}_{index}{ext}"/>
+                                <TextBlock Margin="0,4,0,0"
+                                           FontSize="11"
+                                           Foreground="{DynamicResource SecondaryTextBrush}"
+                                           Text="可用：{name} 原文件名、{index} 序号、{ext} 扩展名"/>
+                            </StackPanel>
+                            <StackPanel Grid.Column="2">
+                                <TextBlock FontWeight="SemiBold" Text="起始序号"/>
+                                <TextBox x:Name="RenameStartIndexTextBox"
+                                         Margin="0,6,0,0"
+                                         TextChanged="RenameInput_TextChanged"
+                                         Style="{StaticResource EditorTextBoxStyle}"
+                                         Text="1"/>
+                            </StackPanel>
+                        </Grid>
+                        <TextBlock Grid.Row="4"
+                                   FontWeight="SemiBold"
+                                   Text="重命名预览"/>
+                        <ListBox x:Name="RenamePreviewList"
+                                 Grid.Row="6"
+                                 Style="{StaticResource FileListStyle}">
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <StackPanel Margin="7,4"
+                                                Orientation="Horizontal">
+                                        <TextBlock Text="{Binding SourceName}"
+                                                   MaxWidth="250"
+                                                   TextTrimming="CharacterEllipsis"/>
+                                        <TextBlock Margin="10,0"
+                                                   Text="→"/>
+                                        <TextBlock Text="{Binding DestinationName}"
+                                                   MaxWidth="250"
+                                                   TextTrimming="CharacterEllipsis"/>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                        <Button x:Name="ExecuteRenameButton"
+                                Grid.Row="8"
+                                HorizontalAlignment="Right"
+                                Click="ExecuteRenameButton_Click"
+                                Style="{StaticResource SkyBlueButtonStyle}"
+                                Content="执行重命名"/>
+                    </Grid>
+
+                    <Grid x:Name="UnlockPanel" Visibility="Collapsed">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="14"/>
+                            <RowDefinition Height="160"/>
+                            <RowDefinition Height="14"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel>
+                                <TextBlock FontSize="16"
+                                           FontWeight="SemiBold"
+                                           Text="解除文件占用"/>
+                                <TextBlock Margin="0,5,0,0"
+                                           Foreground="{DynamicResource SecondaryTextBrush}"
+                                           TextWrapping="Wrap"
+                                           Text="先检测占用程序；解除占用前请保存相关程序中的工作。"/>
+                            </StackPanel>
+                            <ToggleButton x:Name="UnlockContextMenuButton"
+                                          Grid.Row="1"
+                                          Grid.ColumnSpan="2"
+                                          Margin="0,10,0,0"
+                                          HorizontalAlignment="Left"
+                                          Click="UnlockContextMenuButton_Click"
+                                          Style="{StaticResource SettingToggleStyle}"
+                                          Content="添加解除文件占用到鼠标右键菜单"/>
+                        </Grid>
+                        <ListBox x:Name="LockingProcessesList"
+                                 Grid.Row="2"
+                                 Style="{StaticResource FileListStyle}">
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid Margin="8,6">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock FontWeight="SemiBold"
+                                                   Text="{Binding ApplicationName}"/>
+                                        <TextBlock Grid.Column="1"
+                                                   Foreground="{DynamicResource SecondaryTextBrush}">
+                                            <Run Text="PID "/>
+                                            <Run Text="{Binding ProcessId}"/>
+                                        </TextBlock>
+                                    </Grid>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                        <StackPanel Grid.Row="4"
+                                    HorizontalAlignment="Right"
+                                    Orientation="Horizontal">
+                            <Button Click="AnalyzeLocksButton_Click"
+                                    Style="{StaticResource SecondaryButtonStyle}"
+                                    Content="检测占用"/>
+                            <Button x:Name="ReleaseLocksButton"
+                                    Margin="8,0,0,0"
+                                    Click="ReleaseLocksButton_Click"
+                                    Style="{StaticResource SkyBlueButtonStyle}"
+                                    Content="解除占用"/>
+                        </StackPanel>
+                    </Grid>
+
+                    <Grid x:Name="ResizePanel" Visibility="Collapsed">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="12"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="12"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="12"/>
+                            <RowDefinition Height="190"/>
+                            <RowDefinition Height="12"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel>
+                                <TextBlock FontSize="16"
+                                           FontWeight="SemiBold"
+                                           Text="调整图片尺寸"/>
+                                <TextBlock Margin="0,5,0,0"
+                                           Foreground="{DynamicResource SecondaryTextBrush}"
+                                           Text="选择列表中的图片，可查看修改前后的效果。"/>
+                            </StackPanel>
+                            <ToggleButton x:Name="ResizeContextMenuButton"
+                                          Grid.Row="1"
+                                          Grid.ColumnSpan="2"
+                                          Margin="0,10,0,0"
+                                          HorizontalAlignment="Left"
+                                          Click="ResizeContextMenuButton_Click"
+                                          Style="{StaticResource SettingToggleStyle}"
+                                          Content="添加调整图片尺寸到鼠标右键菜单"/>
+                        </Grid>
+                        <Grid Grid.Row="2">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="140"/>
+                                <ColumnDefinition Width="28"/>
+                                <ColumnDefinition Width="140"/>
+                                <ColumnDefinition Width="20"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel>
+                                <TextBlock FontWeight="SemiBold" Text="宽度（像素）"/>
+                                <TextBox x:Name="ResizeWidthTextBox"
+                                         Margin="0,6,0,0"
+                                         TextChanged="ResizeInput_TextChanged"
+                                         Style="{StaticResource EditorTextBoxStyle}"
+                                         Text="1920"/>
+                            </StackPanel>
+                            <TextBlock Grid.Column="1"
+                                       Margin="0,28,0,0"
+                                       HorizontalAlignment="Center"
+                                       FontSize="18"
+                                       Text="×"/>
+                            <StackPanel Grid.Column="2">
+                                <TextBlock FontWeight="SemiBold" Text="高度（像素）"/>
+                                <TextBox x:Name="ResizeHeightTextBox"
+                                         Margin="0,6,0,0"
+                                         TextChanged="ResizeInput_TextChanged"
+                                         Style="{StaticResource EditorTextBoxStyle}"
+                                         Text="1080"/>
+                            </StackPanel>
+                            <ToggleButton x:Name="PreserveRatioToggle"
+                                          Grid.Column="5"
+                                          Margin="0,22,0,0"
+                                          VerticalAlignment="Center"
+                                          IsChecked="True"
+                                          Click="PreserveRatioToggle_Click"
+                                          Content="保持比例"
+                                          Style="{StaticResource SettingToggleStyle}"/>
+                        </Grid>
+                        <TextBlock Grid.Row="4"
+                                   Foreground="{DynamicResource SecondaryTextBrush}"
+                                   Text="支持 JPG、PNG、BMP、GIF、TIFF；输出到“百宝袋_调整尺寸”文件夹。"/>
+                        <Grid Grid.Row="6">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="14"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Border Padding="8"
+                                    Background="{DynamicResource WindowBackgroundBrush}"
+                                    BorderBrush="{DynamicResource BorderBrush}"
+                                    BorderThickness="1"
+                                    CornerRadius="6">
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="6"/>
+                                        <RowDefinition Height="*"/>
+                                    </Grid.RowDefinitions>
+                                    <TextBlock x:Name="OriginalImageInfoText"
+                                               FontWeight="SemiBold"
+                                               Text="原图预览"/>
+                                    <Image x:Name="OriginalPreviewImage"
+                                           Grid.Row="2"
+                                           Stretch="Uniform"/>
+                                </Grid>
+                            </Border>
+                            <Border Grid.Column="2"
+                                    Padding="8"
+                                    Background="{DynamicResource WindowBackgroundBrush}"
+                                    BorderBrush="{DynamicResource BorderBrush}"
+                                    BorderThickness="1"
+                                    CornerRadius="6">
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="6"/>
+                                        <RowDefinition Height="*"/>
+                                    </Grid.RowDefinitions>
+                                    <TextBlock x:Name="TargetImageInfoText"
+                                               FontWeight="SemiBold"
+                                               Text="修改后预览"/>
+                                    <Border x:Name="TargetPreviewCanvas"
+                                            Grid.Row="2"
+                                            HorizontalAlignment="Center"
+                                            VerticalAlignment="Center"
+                                            Background="#20A0A0A0"
+                                            ClipToBounds="True">
+                                        <Image x:Name="TargetPreviewImage"
+                                               Stretch="Uniform"/>
+                                    </Border>
+                                </Grid>
+                            </Border>
+                        </Grid>
+                        <Button x:Name="ExecuteResizeButton"
+                                Grid.Row="8"
+                                HorizontalAlignment="Right"
+                                Click="ExecuteResizeButton_Click"
+                                Style="{StaticResource SkyBlueButtonStyle}"
+                                Content="开始调整"/>
+                    </Grid>
+                </Grid>
+            </ScrollViewer>
+        </Border>
+
+        <TextBlock x:Name="StatusText"
+                   Grid.Row="7"
+                   Margin="2,9,2,0"
+                   Foreground="{DynamicResource SecondaryTextBrush}"
+                   Text="请先添加文件。"/>
+
+        <Grid x:Name="ModernConfirmOverlay"
+              Grid.RowSpan="8"
+              Panel.ZIndex="100"
+              Background="#66000000"
+              Visibility="Collapsed">
+            <Border Width="440"
+                    Padding="24"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    Background="{DynamicResource SurfaceBrush}"
+                    BorderBrush="{DynamicResource BorderBrush}"
+                    BorderThickness="1"
+                    CornerRadius="10">
+                <Border.Effect>
+                    <DropShadowEffect BlurRadius="24"
+                                      Opacity="0.28"
+                                      ShadowDepth="6"/>
+                </Border.Effect>
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="12"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="22"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    <TextBlock FontSize="20"
+                               FontWeight="SemiBold"
+                               Text="确认批量重命名"/>
+                    <TextBlock x:Name="ModernConfirmMessage"
+                               Grid.Row="2"
+                               Foreground="{DynamicResource SecondaryTextBrush}"
+                               TextWrapping="Wrap"/>
+                    <StackPanel Grid.Row="4"
+                                HorizontalAlignment="Right"
+                                Orientation="Horizontal">
+                        <Button MinWidth="88"
+                                Click="ModernConfirmCancelButton_Click"
+                                Style="{StaticResource SecondaryButtonStyle}"
+                                Content="取消"/>
+                        <Button MinWidth="88"
+                                Margin="10,0,0,0"
+                                Click="ModernConfirmAcceptButton_Click"
+                                Style="{StaticResource SkyBlueButtonStyle}"
+                                Content="确认重命名"/>
+                    </StackPanel>
+                </Grid>
+            </Border>
+        </Grid>
+    </Grid>
+</UserControl>

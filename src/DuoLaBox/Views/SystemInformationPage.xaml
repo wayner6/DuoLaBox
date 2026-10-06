@@ -1,0 +1,188 @@
+<UserControl x:Class="DuoLaBox.Views.SystemInformationPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Foreground="{DynamicResource PrimaryTextBrush}"
+             IsVisibleChanged="SystemInformationPage_IsVisibleChanged">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="20"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <StackPanel>
+                <TextBlock FontSize="28"
+                           FontWeight="SemiBold"
+                           Text="系统信息"/>
+                <TextBlock Margin="0,7,0,0"
+                           Foreground="{DynamicResource SecondaryTextBrush}"
+                           Text="查看这台电脑的系统与主要硬件信息。"/>
+            </StackPanel>
+            <Button x:Name="RefreshButton"
+                    Grid.Column="1"
+                    MinWidth="104"
+                    Height="36"
+                    VerticalAlignment="Center"
+                    Click="RefreshButton_Click"
+                    Style="{StaticResource SecondaryButtonStyle}">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Margin="0,0,7,0"
+                               FontFamily="Segoe Fluent Icons"
+                               Text="&#xE72C;"/>
+                    <TextBlock Text="重新扫描"/>
+                </StackPanel>
+            </Button>
+        </Grid>
+
+        <ScrollViewer Grid.Row="2"
+                      HorizontalScrollBarVisibility="Disabled"
+                      VerticalScrollBarVisibility="Auto">
+            <StackPanel Margin="0,0,4,0">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="12"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="12"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <Border Grid.Column="0"
+                            MinHeight="132"
+                            Padding="18,16"
+                            Background="{DynamicResource SurfaceBrush}"
+                            BorderBrush="{DynamicResource BorderBrush}"
+                            BorderThickness="1"
+                            CornerRadius="8">
+                        <StackPanel>
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Margin="0,0,10,0"
+                                           VerticalAlignment="Center"
+                                           FontFamily="Segoe Fluent Icons"
+                                           FontSize="18"
+                                           Foreground="{DynamicResource AccentBrush}"
+                                           Text="&#xE7F4;"/>
+                                <TextBlock VerticalAlignment="Center"
+                                           FontSize="15"
+                                           FontWeight="SemiBold"
+                                           Text="型号信息"/>
+                            </StackPanel>
+                            <TextBlock x:Name="ModelText"
+                                       Margin="0,18,0,0"
+                                       FontSize="15"
+                                       Text="等待扫描…"
+                                       TextWrapping="Wrap"/>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Grid.Column="2"
+                            MinHeight="132"
+                            Padding="18,16"
+                            Background="{DynamicResource SurfaceBrush}"
+                            BorderBrush="{DynamicResource BorderBrush}"
+                            BorderThickness="1"
+                            CornerRadius="8">
+                        <StackPanel>
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Margin="0,0,10,0"
+                                           VerticalAlignment="Center"
+                                           FontFamily="Segoe Fluent Icons"
+                                           FontSize="18"
+                                           Foreground="{DynamicResource AccentBrush}"
+                                           Text="&#xE770;"/>
+                                <TextBlock VerticalAlignment="Center"
+                                           FontSize="15"
+                                           FontWeight="SemiBold"
+                                           Text="系统信息"/>
+                            </StackPanel>
+                            <TextBlock x:Name="OperatingSystemText"
+                                       Margin="0,18,0,0"
+                                       FontSize="15"
+                                       Text="等待扫描…"
+                                       TextWrapping="Wrap"/>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Grid.Column="4"
+                            MinHeight="132"
+                            Padding="18,16"
+                            Background="{DynamicResource SurfaceBrush}"
+                            BorderBrush="{DynamicResource BorderBrush}"
+                            BorderThickness="1"
+                            CornerRadius="8">
+                        <StackPanel>
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Margin="0,0,10,0"
+                                           VerticalAlignment="Center"
+                                           FontFamily="Segoe Fluent Icons"
+                                           FontSize="18"
+                                           Foreground="{DynamicResource AccentBrush}"
+                                           Text="&#xE823;"/>
+                                <TextBlock VerticalAlignment="Center"
+                                           FontSize="15"
+                                           FontWeight="SemiBold"
+                                           Text="运行时间"/>
+                            </StackPanel>
+                            <TextBlock x:Name="UptimeText"
+                                       Margin="0,18,0,0"
+                                       FontSize="15"
+                                       Text="等待扫描…"
+                                       TextWrapping="Wrap"/>
+                        </StackPanel>
+                    </Border>
+                </Grid>
+
+                <Border Margin="0,14,0,0"
+                        Padding="20,18"
+                        Background="{DynamicResource SurfaceBrush}"
+                        BorderBrush="{DynamicResource BorderBrush}"
+                        BorderThickness="1"
+                        CornerRadius="8">
+                    <StackPanel>
+                        <TextBlock FontSize="17"
+                                   FontWeight="SemiBold"
+                                   Text="详细信息"/>
+                        <ItemsControl x:Name="DetailsList"
+                                      Margin="0,17,0,0">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid Margin="0,0,0,13">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="88"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock VerticalAlignment="Top"
+                                                   FontWeight="SemiBold"
+                                                   Foreground="{DynamicResource SecondaryTextBrush}"
+                                                   Text="{Binding Label}"/>
+                                        <ItemsControl Grid.Column="1"
+                                                      ItemsSource="{Binding Values}">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <TextBlock Margin="0,0,0,4"
+                                                               Text="{Binding}"
+                                                               TextWrapping="Wrap"/>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </Grid>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </Border>
+
+                <Grid Margin="2,12,2,4">
+                    <TextBlock x:Name="StatusText"
+                               Foreground="{DynamicResource SecondaryTextBrush}"
+                               Text="打开此页面后会自动扫描。"/>
+                </Grid>
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
+</UserControl>

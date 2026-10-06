@@ -1,0 +1,75 @@
+name: Windows build and test release
+
+on:
+  push:
+    tags: ['v*']
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v6
+        with:
+          global-json-file: global.json
+      - name: Check version
+        shell: pwsh
+        run: |
+          [xml]$project = Get-Content src/DuoLaBox/DuoLaBox.csproj
+          $version = $project.Project.PropertyGroup.Version
+          if ($env:GITHUB_REF_TYPE -eq 'tag' -and $env:GITHUB_REF_NAME -ne "v$version") {
+            throw "Tag must match project version v$version"
+          }
+      - name: Build solution
+        run: dotnet build DuoLaBox.sln --configuration Release
+      - name: Run isolated regression checks
+        run: dotnet run --project tests/DuoLaBox.RegressionVerification --configuration Release --no-build
+      - name: Run clipboard checks on disposable runner
+        run: dotnet run --project tests/DuoLaBox.ClipboardVerification --configuration Release --no-build -- --allow-clipboard-write
+      - name: Publish Windows x64
+        run: dotnet publish src/DuoLaBox/DuoLaBox.csproj --configuration Release --runtime win-x64 --self-contained true --no-build --output artifacts/win-x64
+      - name: Package portable build
+        shell: pwsh
+        run: |
+          [xml]$project = Get-Content src/DuoLaBox/DuoLaBox.csproj
+          $version = $project.Project.PropertyGroup.Version
+          Copy-Item LICENSE, README.md artifacts/win-x64/
+          Compress-Archive -Path artifacts/win-x64/* -DestinationPath "artifacts/DuoLaBox-$version-win-x64.zip"
+          $file = Get-Item "artifacts/DuoLaBox-$version-win-x64.zip"
+          $hash = (Get-FileHash $file.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
+          "$hash  $($file.Name)" | Set-Content artifacts/SHA256SUMS.txt -Encoding ascii
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows-x64
+          path: |
+            artifacts/*.zip
+            artifacts/SHA256SUMS.txt
+          if-no-files-found: error
+          retention-days: 14
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: windows-x64
+          path: artifacts
+      - name: Publish pre-release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" artifacts/*.zip artifacts/SHA256SUMS.txt \
+            --verify-tag --prerelease --title "DuoLaBox $GITHUB_REF_NAME 测试版" \
+            --notes-file RELEASE_NOTES.md

@@ -1,0 +1,21 @@
+[Bb]in/
+[Oo]bj/
+.vs/
+*.user
+*.suo
+*.nupkg
+publish/
+.dotnet-sdk/
+.dotnet-sdk-*.zip
+.dotnet-home/
+.nuget-packages/
+.offline-feed/
+.appdata/
+dist/
+dist-compact/
+dist-update/
+dist-v*/
+artifacts/
+发布/
+
+# Local release output; binaries are distributed through GitHub Releases.

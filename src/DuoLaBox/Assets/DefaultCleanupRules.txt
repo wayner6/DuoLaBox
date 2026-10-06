@@ -1,0 +1,105 @@
+# DuoLaBoxCleanupLibraryVersion=2
+# DuoLaBox C 盘安全清理库
+#
+# 每行一条路径；以 # 开头的行是说明，不参与扫描。
+# 支持环境变量、*（单层通配）和 **（跨目录通配）。目录末尾的 \ 表示清理目录内文件，但不会删除目录本身。
+#
+# 安全边界：不清理“下载”、桌面、文档、回收站、云盘文件，也不直接清理 WinSxS、Windows Installer、DriverStore、注册表、事件日志和还原点。
+# 浏览器与应用缓存只清理可重新生成的 Cache / Code Cache / GPUCache，不清理 Cookie、登录状态、收藏夹、历史记录或配置。
+
+# [用户临时文件]
+# 说明：安装器和应用程序在当前用户临时目录留下的文件；正在使用的文件会保留。
+%TEMP%\
+
+# [Windows 临时文件]
+# 说明：Windows 与系统服务产生的临时文件。部分文件需要管理员权限，正在使用的文件会保留。
+%SystemRoot%\Temp\
+%SystemRoot%\SystemTemp\
+%ProgramData%\TEMP\
+
+# [崩溃报告与转储]
+# 说明：程序或系统崩溃后生成的诊断报告；删除不影响正常运行，但会失去旧故障的调试材料。
+%LOCALAPPDATA%\CrashDumps\*.dmp
+%ProgramData%\Microsoft\Windows\WER\ReportArchive\
+%ProgramData%\Microsoft\Windows\WER\ReportQueue\
+%ProgramData%\Microsoft\Windows\WER\Temp\
+%SystemRoot%\Minidump\*.dmp
+%SystemRoot%\LiveKernelReports\**\*.dmp
+%SystemRoot%\MEMORY.DMP
+
+# [Windows 诊断与安装日志]
+# 说明：已归档或可重新生成的诊断、升级和组件维护日志；不清理 Windows 事件日志。
+%ProgramData%\Microsoft\Diagnosis\ETLLogs\*.etl
+%ProgramData%\Microsoft\DiagnosticLogCSP\Collectors\*.etl
+%ProgramData%\Microsoft\Windows\wfp\*.etl
+%ProgramData%\USOShared\Logs\**\*.etl
+%SystemRoot%\Logs\CBS\*.cab
+%SystemRoot%\Logs\CBS\CbsPersist_*.log
+%SystemRoot%\Panther\*.etl
+%SystemRoot%\Panther\*.log
+%SystemRoot%\Panther\UnattendGC\*.log
+%SystemRoot%\Performance\WinSAT\*.log
+%SystemRoot%\System32\SleepStudy\*.etl
+
+# [图形与着色器缓存]
+# 说明：DirectX、AMD、NVIDIA 和 Intel 的着色器缓存；删除后游戏或图形软件首次启动可能短暂重新编译。
+%LOCALAPPDATA%\D3DSCache\
+%LOCALAPPDATA%\AMD\DxCache\
+%LOCALAPPDATA%\AMD\GLCache\
+%LOCALAPPDATA%\AMD\VkCache\
+%LOCALAPPDATA%\NVIDIA\DXCache\
+%LOCALAPPDATA%\NVIDIA\GLCache\
+%ProgramData%\Intel\ShaderCache\
+
+# [Windows 外壳待删除缓存]
+# 说明：资源管理器已经标记为可删除的旧图标和缩略图缓存，不清理当前正在使用的主缓存。
+%LOCALAPPDATA%\Microsoft\Windows\Explorer\IconCacheToDelete\
+%LOCALAPPDATA%\Microsoft\Windows\Explorer\ThumbCacheToDelete\
+%LOCALAPPDATA%\Microsoft\Windows\Notifications\*.tmp
+
+# [Microsoft Store 应用临时文件]
+# 说明：商店应用声明为 TempState 或 AC\Temp 的临时内容；不清理应用数据、账户或配置。
+%LOCALAPPDATA%\Packages\*\TempState\**
+%LOCALAPPDATA%\Packages\*\AC\Temp\**
+
+# [Chromium 浏览器缓存]
+# 说明：Chrome、Edge、Brave 的网页、脚本和 GPU 缓存；不清理 Cookie、密码、历史记录和扩展数据。
+%LOCALAPPDATA%\Google\Chrome\User Data\*\Cache\Cache_Data\**
+%LOCALAPPDATA%\Google\Chrome\User Data\*\Code Cache\**
+%LOCALAPPDATA%\Google\Chrome\User Data\*\GPUCache\**
+%LOCALAPPDATA%\Microsoft\Edge\User Data\*\Cache\Cache_Data\**
+%LOCALAPPDATA%\Microsoft\Edge\User Data\*\Code Cache\**
+%LOCALAPPDATA%\Microsoft\Edge\User Data\*\GPUCache\**
+%LOCALAPPDATA%\BraveSoftware\Brave-Browser\User Data\*\Cache\Cache_Data\**
+%LOCALAPPDATA%\BraveSoftware\Brave-Browser\User Data\*\Code Cache\**
+%LOCALAPPDATA%\BraveSoftware\Brave-Browser\User Data\*\GPUCache\**
+
+# [Firefox 浏览器缓存]
+# 说明：Firefox 各配置文件的网络缓存；不清理登录、历史记录、书签和站点数据。
+%LOCALAPPDATA%\Mozilla\Firefox\Profiles\*\cache2\**
+
+# [常用桌面应用缓存]
+# 说明：Discord、Teams、Slack、Zoom、WPS 的可再生成缓存和日志；关闭相关软件后清理更完整。
+%APPDATA%\discord\Cache\**
+%APPDATA%\discord\Code Cache\**
+%APPDATA%\discord\GPUCache\**
+%APPDATA%\Microsoft\Teams\Cache\**
+%APPDATA%\Microsoft\Teams\Code Cache\**
+%APPDATA%\Microsoft\Teams\GPUCache\**
+%APPDATA%\Slack\Cache\**
+%APPDATA%\Slack\Code Cache\**
+%APPDATA%\Slack\GPUCache\**
+%APPDATA%\Zoom\logs\*.log
+%APPDATA%\kingsoft\office6\cache\**
+%APPDATA%\kingsoft\office6\log\**
+%APPDATA%\kingsoft\office6\update\log\**
+%APPDATA%\kingsoft\kingsoft\office6\update\down\**
+
+# [运行库与安装诊断日志]
+# 说明：.NET 和部分硬件/虚拟化软件产生的使用与诊断日志，不清理驱动或安装缓存。
+%LOCALAPPDATA%\Microsoft\CLR_v2.0_32\UsageLogs\*.log
+%LOCALAPPDATA%\Microsoft\CLR_v4.0\UsageLogs\*.log
+%LOCALAPPDATA%\Microsoft\CLR_v4.0_32\UsageLogs\*.log
+%ProgramData%\Intel\Logs\*.log
+%ProgramData%\Intel\iCLS Client\log\*.log
+%ProgramData%\VMware\logs\*.log

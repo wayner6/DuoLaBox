@@ -1,0 +1,268 @@
+﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+        <Style x:Key="FluentScrollPageButtonStyle"
+               TargetType="RepeatButton">
+            <Setter Property="Focusable" Value="False"/>
+            <Setter Property="IsTabStop" Value="False"/>
+            <Setter Property="OverridesDefaultStyle" Value="True"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="RepeatButton">
+                        <Border Background="Transparent"/>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="FluentScrollLineButtonStyle"
+               TargetType="RepeatButton">
+            <Setter Property="Width" Value="16"/>
+            <Setter Property="Height" Value="16"/>
+            <Setter Property="Focusable" Value="False"/>
+            <Setter Property="IsTabStop" Value="False"/>
+            <Setter Property="OverridesDefaultStyle" Value="True"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="RepeatButton">
+                        <Border x:Name="ButtonBackground"
+                                Background="Transparent"
+                                CornerRadius="4">
+                            <ContentPresenter HorizontalAlignment="Center"
+                                              VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="ButtonBackground"
+                                        Property="Background"
+                                        Value="{DynamicResource ControlHoverBrush}"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="ButtonBackground"
+                                        Property="Background"
+                                        Value="{DynamicResource ControlPressedBrush}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="FluentScrollThumbStyle" TargetType="Thumb">
+            <Setter Property="Background"
+                    Value="{DynamicResource SecondaryTextBrush}"/>
+            <Setter Property="Opacity" Value="0.48"/>
+            <Setter Property="Focusable" Value="False"/>
+            <Setter Property="IsTabStop" Value="False"/>
+            <Setter Property="OverridesDefaultStyle" Value="True"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Thumb">
+                        <Border Background="{TemplateBinding Background}"
+                                CornerRadius="4"
+                                SnapsToDevicePixels="True"/>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Opacity" Value="0.72"/>
+                            </Trigger>
+                            <Trigger Property="IsDragging" Value="True">
+                                <Setter Property="Opacity" Value="0.9"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <ControlTemplate x:Key="FluentVerticalScrollBarTemplate"
+                         TargetType="ScrollBar">
+            <Grid Width="16"
+                  HorizontalAlignment="Center"
+                  Background="Transparent">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="16"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="16"/>
+                </Grid.RowDefinitions>
+                <Border x:Name="TrackBackground"
+                        Grid.RowSpan="3"
+                        Width="14"
+                        HorizontalAlignment="Center"
+                        Background="{DynamicResource ControlHoverBrush}"
+                        CornerRadius="7"
+                        Opacity="0"/>
+                <RepeatButton x:Name="LineUpButton"
+                              Grid.Row="0"
+                              Command="ScrollBar.LineUpCommand"
+                              Opacity="0"
+                              Style="{StaticResource FluentScrollLineButtonStyle}">
+                    <Path Width="8"
+                          Height="5"
+                          Data="M 0,5 L 4,1 L 8,5"
+                          Stroke="{DynamicResource SecondaryTextBrush}"
+                          StrokeEndLineCap="Round"
+                          StrokeStartLineCap="Round"
+                          StrokeThickness="1.4"/>
+                </RepeatButton>
+                <Track x:Name="PART_Track"
+                       Grid.Row="1"
+                       Width="7"
+                       HorizontalAlignment="Center"
+                       IsDirectionReversed="True"
+                       Orientation="Vertical">
+                    <Track.DecreaseRepeatButton>
+                        <RepeatButton Command="ScrollBar.PageUpCommand"
+                                      Style="{StaticResource FluentScrollPageButtonStyle}"/>
+                    </Track.DecreaseRepeatButton>
+                    <Track.Thumb>
+                        <Thumb MinHeight="48"
+                               Style="{StaticResource FluentScrollThumbStyle}"/>
+                    </Track.Thumb>
+                    <Track.IncreaseRepeatButton>
+                        <RepeatButton Command="ScrollBar.PageDownCommand"
+                                      Style="{StaticResource FluentScrollPageButtonStyle}"/>
+                    </Track.IncreaseRepeatButton>
+                </Track>
+                <RepeatButton x:Name="LineDownButton"
+                              Grid.Row="2"
+                              Command="ScrollBar.LineDownCommand"
+                              Opacity="0"
+                              Style="{StaticResource FluentScrollLineButtonStyle}">
+                    <Path Width="8"
+                          Height="5"
+                          Data="M 0,0 L 4,4 L 8,0"
+                          Stroke="{DynamicResource SecondaryTextBrush}"
+                          StrokeEndLineCap="Round"
+                          StrokeStartLineCap="Round"
+                          StrokeThickness="1.4"/>
+                </RepeatButton>
+            </Grid>
+            <ControlTemplate.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter TargetName="TrackBackground"
+                            Property="Opacity"
+                            Value="0.72"/>
+                    <Setter TargetName="LineUpButton"
+                            Property="Opacity"
+                            Value="1"/>
+                    <Setter TargetName="LineDownButton"
+                            Property="Opacity"
+                            Value="1"/>
+                    <Setter TargetName="PART_Track"
+                            Property="Width"
+                            Value="9"/>
+                </Trigger>
+                <Trigger Property="IsEnabled" Value="False">
+                    <Setter Property="Opacity" Value="0.35"/>
+                </Trigger>
+            </ControlTemplate.Triggers>
+        </ControlTemplate>
+
+        <ControlTemplate x:Key="FluentHorizontalScrollBarTemplate"
+                         TargetType="ScrollBar">
+            <Grid Height="16"
+                  VerticalAlignment="Center"
+                  Background="Transparent">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="16"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="16"/>
+                </Grid.ColumnDefinitions>
+                <Border x:Name="TrackBackground"
+                        Grid.ColumnSpan="3"
+                        Height="14"
+                        VerticalAlignment="Center"
+                        Background="{DynamicResource ControlHoverBrush}"
+                        CornerRadius="7"
+                        Opacity="0"/>
+                <RepeatButton x:Name="LineLeftButton"
+                              Grid.Column="0"
+                              Command="ScrollBar.LineLeftCommand"
+                              Opacity="0"
+                              Style="{StaticResource FluentScrollLineButtonStyle}">
+                    <Path Width="5"
+                          Height="8"
+                          Data="M 5,0 L 1,4 L 5,8"
+                          Stroke="{DynamicResource SecondaryTextBrush}"
+                          StrokeEndLineCap="Round"
+                          StrokeStartLineCap="Round"
+                          StrokeThickness="1.4"/>
+                </RepeatButton>
+                <Track x:Name="PART_Track"
+                       Grid.Column="1"
+                       Height="7"
+                       VerticalAlignment="Center"
+                       IsDirectionReversed="False"
+                       Orientation="Horizontal">
+                    <Track.DecreaseRepeatButton>
+                        <RepeatButton Command="ScrollBar.PageLeftCommand"
+                                      Style="{StaticResource FluentScrollPageButtonStyle}"/>
+                    </Track.DecreaseRepeatButton>
+                    <Track.Thumb>
+                        <Thumb MinWidth="48"
+                               Style="{StaticResource FluentScrollThumbStyle}"/>
+                    </Track.Thumb>
+                    <Track.IncreaseRepeatButton>
+                        <RepeatButton Command="ScrollBar.PageRightCommand"
+                                      Style="{StaticResource FluentScrollPageButtonStyle}"/>
+                    </Track.IncreaseRepeatButton>
+                </Track>
+                <RepeatButton x:Name="LineRightButton"
+                              Grid.Column="2"
+                              Command="ScrollBar.LineRightCommand"
+                              Opacity="0"
+                              Style="{StaticResource FluentScrollLineButtonStyle}">
+                    <Path Width="5"
+                          Height="8"
+                          Data="M 0,0 L 4,4 L 0,8"
+                          Stroke="{DynamicResource SecondaryTextBrush}"
+                          StrokeEndLineCap="Round"
+                          StrokeStartLineCap="Round"
+                          StrokeThickness="1.4"/>
+                </RepeatButton>
+            </Grid>
+            <ControlTemplate.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter TargetName="TrackBackground"
+                            Property="Opacity"
+                            Value="0.72"/>
+                    <Setter TargetName="LineLeftButton"
+                            Property="Opacity"
+                            Value="1"/>
+                    <Setter TargetName="LineRightButton"
+                            Property="Opacity"
+                            Value="1"/>
+                    <Setter TargetName="PART_Track"
+                            Property="Height"
+                            Value="9"/>
+                </Trigger>
+                <Trigger Property="IsEnabled" Value="False">
+                    <Setter Property="Opacity" Value="0.35"/>
+                </Trigger>
+            </ControlTemplate.Triggers>
+        </ControlTemplate>
+
+        <Style x:Key="FluentScrollBarStyle" TargetType="ScrollBar">
+            <Setter Property="Width" Value="16"/>
+            <Setter Property="MinWidth" Value="16"/>
+            <Setter Property="Margin" Value="0"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="OverridesDefaultStyle" Value="True"/>
+            <Setter Property="SnapsToDevicePixels" Value="True"/>
+            <Setter Property="Template"
+                    Value="{StaticResource FluentVerticalScrollBarTemplate}"/>
+            <Style.Triggers>
+                <Trigger Property="Orientation" Value="Horizontal">
+                    <Setter Property="Width" Value="Auto"/>
+                    <Setter Property="MinWidth" Value="0"/>
+                    <Setter Property="Height" Value="16"/>
+                    <Setter Property="MinHeight" Value="16"/>
+                    <Setter Property="Template"
+                            Value="{StaticResource FluentHorizontalScrollBarTemplate}"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+        <Style TargetType="ScrollBar"
+               BasedOn="{StaticResource FluentScrollBarStyle}"/>
+
+</ResourceDictionary>
