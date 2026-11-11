@@ -16,10 +16,33 @@ internal static class StorageAndScanChecks
             VerifyStagedBytes(directory);
             VerifyAtomicSave(directory);
             await VerifyScanAsync(directory);
+            VerifyCrashLog(directory);
         }
         finally
         {
             Directory.Delete(directory, recursive: true);
+        }
+    }
+
+    private static void VerifyCrashLog(string directory)
+    {
+        var path = Path.Combine(directory, "logs", "crash.log");
+        Assert(CrashLog.TryWrite(path, "测试", new InvalidOperationException("第一次")) &&
+            CrashLog.TryWrite(path, "测试", null),
+            "Crash log was not written.");
+        var content = File.ReadAllText(path);
+        Assert(content.Contains("第一次") && content.Contains("未知错误"),
+            "Crash log did not append both entries.");
+
+        File.WriteAllText(path, new string('x', 1024 * 1024 + 1));
+        Assert(CrashLog.TryWrite(path, "测试", new IOException("轮换后")) &&
+            new FileInfo(path).Length < 64 * 1024,
+            "Oversized crash log was not rotated.");
+
+        using (File.Open(path, FileMode.Open, FileAccess.Read, FileShare.None))
+        {
+            Assert(!CrashLog.TryWrite(path, "测试", null),
+                "Locked crash log did not report failure.");
         }
     }
 

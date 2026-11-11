@@ -174,7 +174,7 @@
                             Style="{StaticResource SecondaryButtonStyle}">
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Margin="0,0,7,0"
-                                       FontFamily="Segoe Fluent Icons"
+                                       FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
                                        Text="&#xE71B;"/>
                             <TextBlock Text="GitHub · wayner6"/>
                         </StackPanel>

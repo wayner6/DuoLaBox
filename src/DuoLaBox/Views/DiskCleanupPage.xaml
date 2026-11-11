@@ -159,7 +159,7 @@
                                 HorizontalAlignment="Center"
                                 VerticalAlignment="Center">
                         <TextBlock HorizontalAlignment="Center"
-                                   FontFamily="Segoe Fluent Icons"
+                                   FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
                                    FontSize="34"
                                    Foreground="{DynamicResource TertiaryTextBrush}"
                                    Text="&#xE74D;"/>

@@ -73,7 +73,7 @@
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
                             <TextBlock VerticalAlignment="Center"
-                                       FontFamily="Segoe Fluent Icons"
+                                       FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
                                        FontSize="16"
                                        Text="&#xE840;"/>
                             <TextBlock Grid.Column="1"
@@ -91,7 +91,7 @@
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
                             <TextBlock VerticalAlignment="Center"
-                                       FontFamily="Segoe Fluent Icons"
+                                       FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
                                        FontSize="16"
                                        Text="&#xE706;"/>
                             <TextBlock Grid.Column="1"
@@ -109,7 +109,7 @@
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
                             <TextBlock VerticalAlignment="Center"
-                                       FontFamily="Segoe Fluent Icons"
+                                       FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
                                        FontSize="16"
                                        Text="&#xE8B7;"/>
                             <TextBlock Grid.Column="1"
@@ -127,7 +127,7 @@
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
                             <TextBlock VerticalAlignment="Center"
-                                       FontFamily="Segoe Fluent Icons"
+                                       FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
                                        FontSize="16"
                                        Text="&#xE74D;"/>
                             <TextBlock Grid.Column="1"
@@ -145,7 +145,7 @@
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
                             <TextBlock VerticalAlignment="Center"
-                                       FontFamily="Segoe Fluent Icons"
+                                       FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
                                        FontSize="16"
                                        Text="&#xE790;"/>
                             <TextBlock Grid.Column="1"
@@ -163,7 +163,7 @@
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
                             <TextBlock VerticalAlignment="Center"
-                                       FontFamily="Segoe Fluent Icons"
+                                       FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
                                        FontSize="16"
                                        Text="&#xE950;"/>
                             <TextBlock Grid.Column="1"
@@ -181,7 +181,7 @@
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
                             <TextBlock VerticalAlignment="Center"
-                                       FontFamily="Segoe Fluent Icons"
+                                       FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
                                        FontSize="16"
                                        Text="&#xE713;"/>
                             <TextBlock Grid.Column="1"
@@ -248,7 +248,7 @@
                             CornerRadius="6">
                         <TextBlock HorizontalAlignment="Center"
                                    VerticalAlignment="Center"
-                                   FontFamily="Segoe Fluent Icons"
+                                   FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
                                    FontSize="17"
                                    Foreground="{DynamicResource AccentBrush}"
                                    Text="&#xE8B0;"/>
@@ -273,7 +273,7 @@
                             Style="{StaticResource SkyBlueButtonStyle}">
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Margin="0,0,7,0"
-                                       FontFamily="Segoe Fluent Icons"
+                                       FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
                                        Text="&#xE840;"/>
                             <TextBlock x:Name="MousePickButtonText"
                                        Text="开始选择"/>
@@ -351,7 +351,7 @@
                                                 <TextBlock x:Name="FallbackWindowIcon"
                                                            HorizontalAlignment="Center"
                                                            VerticalAlignment="Center"
-                                                           FontFamily="Segoe Fluent Icons"
+                                                           FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
                                                            FontSize="17"
                                                            Foreground="{DynamicResource AccentBrush}"
                                                            Text="&#xE8A7;"
@@ -412,7 +412,7 @@
                                 VerticalAlignment="Center"
                                 Visibility="Collapsed">
                         <TextBlock HorizontalAlignment="Center"
-                                   FontFamily="Segoe Fluent Icons"
+                                   FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
                                    FontSize="36"
                                    Foreground="{DynamicResource TertiaryTextBrush}"
                                    Text="&#xE7BA;"/>

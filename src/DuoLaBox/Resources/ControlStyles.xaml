@@ -267,7 +267,7 @@
                                     <TextBlock Grid.Column="1"
                                                HorizontalAlignment="Right"
                                                VerticalAlignment="Center"
-                                               FontFamily="Segoe Fluent Icons"
+                                               FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
                                                FontSize="12"
                                                Text="&#xE70D;"/>
                                 </Grid>

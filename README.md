@@ -13,7 +13,15 @@
 
 ## 下载与测试
 
-在 [Releases](https://github.com/wayner6/DuoLaBox/releases) 下载测试版 Windows x64 ZIP，解压后运行 `DuoLaBox.exe`。自包含版本不要求另行安装 .NET。
+在 [Releases](https://github.com/wayner6/DuoLaBox/releases) 下载测试版 ZIP，解压后运行 `DuoLaBox.exe`。自包含版本不要求另行安装 .NET。
+
+| 文件 | 适用系统 |
+|---|---|
+| `win-x64` | 64 位 Windows 10 / 11（大多数电脑） |
+| `win-x86` | 32 位 Windows 10，以及 ARM 设备上的 Windows 10 |
+| `win-arm64` | ARM 设备上的 Windows 11 |
+
+程序出现未处理的错误时会把详细信息写入 `%LOCALAPPDATA%\DuoLaBox\crash.log`，反馈问题时请附上该文件。
 
 测试版尚未完成全部代码审查修复。升级前请先退出旧版本：本次单实例通信名称与协议有变化。首次测试建议使用临时文件或虚拟机，并先备份重要数据。
 
@@ -27,7 +35,7 @@
 
 ## 开发
 
-需要 Windows 和 `global.json` 指定的 .NET 10 SDK。
+需要 Windows 和 .NET 10 SDK（`global.json` 要求 10.0.302 或更新的 10.0 版本）。
 
 ```powershell
 dotnet build DuoLaBox.sln --configuration Release

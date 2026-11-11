@@ -114,7 +114,7 @@
                                         Click="RemoveFileButton_Click"
                                         Cursor="Hand"
                                         Foreground="{DynamicResource SecondaryTextBrush}"
-                                        FontFamily="Segoe Fluent Icons"
+                                        FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
                                         FontSize="12"
                                         Tag="{Binding}"
                                         ToolTip="从当前列表移除"

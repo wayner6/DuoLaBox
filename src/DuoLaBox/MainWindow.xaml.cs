@@ -50,6 +50,7 @@ public partial class MainWindow : Window
             _systemThemeModeService);
 
         InitializeComponent();
+        FitToWorkArea();
         VersionText.Text =
             $"版本 {Assembly.GetExecutingAssembly().GetName().Version?.ToString(3)}";
         _colorPreviewWindow = new ColorPreviewWindow();
@@ -112,6 +113,16 @@ public partial class MainWindow : Window
         _systemThemeModeService.ModeChanged +=
             SystemThemeModeService_ModeChanged;
 
+    }
+
+    // 小屏幕或高缩放下，默认尺寸可能超出可用桌面区域（如 1366×768）。
+    private void FitToWorkArea()
+    {
+        var workArea = SystemParameters.WorkArea;
+        MinWidth = Math.Min(MinWidth, workArea.Width);
+        MinHeight = Math.Min(MinHeight, workArea.Height);
+        Width = Math.Min(Width, workArea.Width);
+        Height = Math.Min(Height, workArea.Height);
     }
 
     public void InitializeStartup()

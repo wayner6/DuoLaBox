@@ -39,7 +39,7 @@
                             CornerRadius="18">
                         <TextBlock HorizontalAlignment="Center"
                                    VerticalAlignment="Center"
-                                   FontFamily="Segoe Fluent Icons"
+                                   FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
                                    FontSize="18"
                                    Foreground="{DynamicResource AccentBrush}"
                                    Text="&#xE708;"/>

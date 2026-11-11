@@ -72,7 +72,7 @@
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
                     <TextBlock VerticalAlignment="Center"
-                               FontFamily="Segoe Fluent Icons"
+                               FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
                                FontSize="16"
                                Text="&#xE8A7;"/>
                     <TextBlock Grid.Column="1"
@@ -88,7 +88,7 @@
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
                     <TextBlock VerticalAlignment="Center"
-                               FontFamily="Segoe Fluent Icons"
+                               FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
                                FontSize="16"
                                Text="&#xE840;"/>
                     <TextBlock Grid.Column="1"
@@ -107,7 +107,7 @@
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
                     <TextBlock VerticalAlignment="Center"
-                               FontFamily="Segoe Fluent Icons"
+                               FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
                                FontSize="16"
                                Text="&#xE8BB;"/>
                     <TextBlock Grid.Column="1"

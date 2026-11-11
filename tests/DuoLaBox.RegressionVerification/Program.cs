@@ -27,6 +27,7 @@ internal static class Program
                     });
                 }
 
+                VerifyIconFontFallback();
                 VerifyCleanupPage();
                 VerifyHostsEditor();
                 await VerifyRenameAsync();
@@ -42,6 +43,24 @@ internal static class Program
             }
         };
         return application.Run();
+    }
+
+    // Windows 10 has no "Segoe Fluent Icons"; every icon glyph the UI uses must exist in the fallback font.
+    private static void VerifyIconFontFallback()
+    {
+        int[] glyphs =
+        [
+            0xE706, 0xE708, 0xE70D, 0xE711, 0xE713, 0xE718, 0xE71B, 0xE72C, 0xE74D, 0xE770,
+            0xE790, 0xE7BA, 0xE7F4, 0xE823, 0xE840, 0xE8A7, 0xE8B0, 0xE8B7, 0xE8BB, 0xE950
+        ];
+        var family = new System.Windows.Media.FontFamily("DuoLaBoxMissingIconFont, Segoe MDL2 Assets");
+        var typeface = new System.Windows.Media.Typeface(
+            family, FontStyles.Normal, FontWeights.Normal, FontStretches.Normal);
+        Assert(typeface.TryGetGlyphTypeface(out var glyphTypeface),
+            "Icon font fallback did not resolve to an installed font.");
+        var missing = glyphs.Where(glyph => !glyphTypeface.CharacterToGlyphMap.ContainsKey(glyph)).ToArray();
+        Assert(missing.Length == 0,
+            "Fallback icon font lacks glyphs: " + string.Join(", ", missing.Select(glyph => glyph.ToString("X4"))));
     }
 
     private static void VerifyCleanupPage()

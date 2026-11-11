@@ -33,21 +33,25 @@ jobs:
         run: dotnet run --project tests/DuoLaBox.RegressionVerification --configuration Release --no-build
       - name: Run clipboard checks on disposable runner
         run: dotnet run --project tests/DuoLaBox.ClipboardVerification --configuration Release --no-build -- --allow-clipboard-write
-      - name: Publish Windows x64
-        run: dotnet publish src/DuoLaBox/DuoLaBox.csproj --configuration Release --runtime win-x64 --self-contained true --no-build --output artifacts/win-x64
-      - name: Package portable build
+      # x86 covers 32-bit Windows 10 and Windows 10 on ARM, which cannot emulate x64.
+      - name: Publish and package portable builds
         shell: pwsh
         run: |
           [xml]$project = Get-Content src/DuoLaBox/DuoLaBox.csproj
           $version = $project.Project.PropertyGroup.Version
-          Copy-Item LICENSE, README.md artifacts/win-x64/
-          Compress-Archive -Path artifacts/win-x64/* -DestinationPath "artifacts/DuoLaBox-$version-win-x64.zip"
-          $file = Get-Item "artifacts/DuoLaBox-$version-win-x64.zip"
-          $hash = (Get-FileHash $file.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
-          "$hash  $($file.Name)" | Set-Content artifacts/SHA256SUMS.txt -Encoding ascii
+          $sums = foreach ($rid in 'win-x64', 'win-x86', 'win-arm64') {
+            dotnet publish src/DuoLaBox/DuoLaBox.csproj --configuration Release --runtime $rid --self-contained true --output "artifacts/$rid"
+            if ($LASTEXITCODE -ne 0) { throw "Publish failed for $rid" }
+            Copy-Item LICENSE, README.md "artifacts/$rid/"
+            $file = "DuoLaBox-$version-$rid.zip"
+            Compress-Archive -Path "artifacts/$rid/*" -DestinationPath "artifacts/$file"
+            $hash = (Get-FileHash "artifacts/$file" -Algorithm SHA256).Hash.ToLowerInvariant()
+            "$hash  $file"
+          }
+          $sums | Set-Content artifacts/SHA256SUMS.txt -Encoding ascii
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
-          name: windows-x64
+          name: windows-portable
           path: |
             artifacts/*.zip
             artifacts/SHA256SUMS.txt
@@ -64,7 +68,7 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
-          name: windows-x64
+          name: windows-portable
           path: artifacts
       - name: Publish pre-release
         env:
