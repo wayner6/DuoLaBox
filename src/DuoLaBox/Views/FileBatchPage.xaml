@@ -447,7 +447,7 @@
                    Grid.Row="7"
                    Margin="2,9,2,0"
                    Foreground="{DynamicResource SecondaryTextBrush}"
-                   Text="请先添加文件。"/>
+                   Text="请先添加文件，也可以把文件拖进窗口。"/>
 
         <Grid x:Name="ModernConfirmOverlay"
               Grid.RowSpan="8"

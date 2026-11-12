@@ -9,8 +9,8 @@
     <Nullable>enable</Nullable>
     <AssemblyName>DuoLaBox</AssemblyName>
     <RootNamespace>DuoLaBox</RootNamespace>
-    <Version>0.25.1-preview.1</Version>
-    <FileVersion>0.25.1.0</FileVersion>
+    <Version>0.26.0-preview.1</Version>
+    <FileVersion>0.26.0.0</FileVersion>
     <Product>DuoLaBox</Product>
     <Title>DuoLaBox</Title>
     <Authors>Wayne</Authors>

@@ -35,6 +35,7 @@ internal static class Program
                 SafetyChecks.Run();
                 await BehaviourChecks.RunAsync();
                 await ConcurrencyChecks.RunAsync();
+                VerifyWindowsLoad();
                 Console.WriteLine("REGRESSION_VERIFICATION_OK");
                 application.Shutdown(0);
             }
@@ -63,6 +64,30 @@ internal static class Program
         var missing = glyphs.Where(glyph => !glyphTypeface.CharacterToGlyphMap.ContainsKey(glyph)).ToArray();
         Assert(missing.Length == 0,
             "Fallback icon font lacks glyphs: " + string.Join(", ", missing.Select(glyph => glyph.ToString("X4"))));
+    }
+
+    // Loads every page and window once so a broken resource or handler name fails here, not at startup.
+    // The main window is only constructed: it is never shown, so it does not sync the context menu,
+    // startup entry or schedule. Its tray icon is removed again straight away.
+    private static void VerifyWindowsLoad()
+    {
+        _ = new SettingsPage();
+        _ = new SystemToolsPage();
+        _ = new ColorPickerPage();
+        _ = new SystemInformationPage();
+        _ = new FileBatchPage();
+        _ = new TrayMenuWindow();
+        _ = new ColorPreviewWindow();
+        var window = new DuoLaBox.MainWindow();
+        var trayIcon = typeof(DuoLaBox.MainWindow)
+            .GetField("_trayIcon", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)
+            ?.GetValue(window) as IDisposable;
+        Assert(trayIcon is not null, "Main window did not create its tray icon.");
+        trayIcon!.Dispose();
+        var workArea = SystemParameters.WorkArea;
+        Assert(window.Width <= workArea.Width && window.Height <= workArea.Height &&
+            window.MinWidth <= workArea.Width && window.MinHeight <= workArea.Height,
+            "Main window does not fit the work area.");
     }
 
     private static void VerifyCleanupPage()
