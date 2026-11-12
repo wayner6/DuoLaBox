@@ -19,6 +19,7 @@ internal static class BehaviourChecks
             await VerifyCaseOnlyRenameAsync(directory);
             await VerifyImageResizeAsync(directory);
             await VerifyQueuedShellRequestsAsync(directory);
+            VerifyGlobPruning(directory);
             VerifyHostsEncoding();
             VerifySchedulePeriods();
             VerifyTrayMenuPlacement();
@@ -92,6 +93,20 @@ internal static class BehaviourChecks
             Assert(!output.PropertyIdList.Contains(0x0112), "Output kept an orientation tag that no longer applies.");
         }
 
+        // The preview reads size and orientation without decoding the full picture.
+        var portraitPreview = FileBatchPage.LoadPreview(portrait);
+        Assert(portraitPreview is { Width: 20, Height: 40 } &&
+            portraitPreview.Image.PixelWidth == 20 && portraitPreview.Image.PixelHeight == 40,
+            "Preview of a portrait photo is not upright.");
+        var large = Path.Combine(folder, "large.png");
+        using (var bitmap = new Bitmap(2000, 1000))
+        {
+            bitmap.Save(large, ImageFormat.Png);
+        }
+        var largePreview = FileBatchPage.LoadPreview(large);
+        Assert(largePreview is { Width: 2000, Height: 1000 } && largePreview.Image.PixelWidth == 640,
+            "Preview decoded a large picture at full size or lost its real dimensions.");
+
         Assert(ImageResizeService.GetOrientationFlip(1) == RotateFlipType.RotateNoneFlipNone &&
             ImageResizeService.GetOrientationFlip(8) == RotateFlipType.Rotate270FlipNone &&
             FileBatchPage.GetOrientationTransform(1) is null &&
@@ -121,6 +136,57 @@ internal static class BehaviourChecks
         await active;
         var list = (System.Windows.Controls.ListBox)page.FindName("SelectedFilesList");
         Assert(list.Items.Count == files.Length, $"Only {list.Items.Count} of {files.Length} queued files arrived.");
+    }
+
+    // Wildcard rules visit only directories that can lead to a match, and still find exactly
+    // what a full walk filtered by the rule's pattern finds.
+    private static void VerifyGlobPruning(string directory)
+    {
+        var root = Path.Combine(directory, "glob");
+        string[] relative =
+        [
+            @"a\Cache\x.tmp", @"a\Cache\deep\z.tmp", @"a\Other\n.tmp", @"a\Cache2\q.tmp",
+            @"b\Cache\y.log", @"long name\Cache\w.tmp", "top.tmp"
+        ];
+        foreach (var item in relative)
+        {
+            var file = Path.Combine(root, item);
+            Directory.CreateDirectory(Path.GetDirectoryName(file)!);
+            File.WriteAllText(file, "safe test data");
+        }
+        var all = Directory.GetFiles(root, "*", SearchOption.AllDirectories);
+
+        string[] Walk(string pattern, out PreparedCleanupRule rule)
+        {
+            Assert(CleanupRuleParser.TryPrepare(Path.Combine(root, pattern), out rule), $"Rule rejected: {pattern}");
+            return [.. CleanupRuleParser.EnumerateFiles(
+                rule, CancellationToken.None, System.Diagnostics.Stopwatch.StartNew(), TimeSpan.FromMinutes(1))];
+        }
+
+        var expectations = new Dictionary<string, int>
+        {
+            [@"*\Cache\**"] = 4,
+            [@"*\Cache\*.tmp"] = 2,
+            [@"**\*.tmp"] = 5,
+            [@"?\Cache\*.log"] = 1,
+            [@"*.tmp"] = 1,
+            [@"a\**"] = 4,
+            [@"*\Cache*\*.tmp"] = 3
+        };
+        foreach (var (pattern, expected) in expectations)
+        {
+            var visited = Walk(pattern, out var rule);
+            var matched = visited.Where(file => CleanupRuleParser.IsFileAllowed(file, rule))
+                .Order(StringComparer.OrdinalIgnoreCase).ToArray();
+            var reference = all.Where(file => CleanupRuleParser.IsFileAllowed(file, rule))
+                .Order(StringComparer.OrdinalIgnoreCase).ToArray();
+            Assert(matched.SequenceEqual(reference, StringComparer.OrdinalIgnoreCase) && matched.Length == expected,
+                $"Rule {pattern} matched {matched.Length} files, full walk matched {reference.Length}, expected {expected}.");
+        }
+
+        var pruned = Walk(@"*\Cache\*.tmp", out _).Select(file => Path.GetRelativePath(root, file)).ToArray();
+        Assert(pruned.Length == 3 && pruned.All(file => Path.GetFileName(Path.GetDirectoryName(file)) == "Cache"),
+            "Wildcard rule walked directories that cannot match: " + string.Join(", ", pruned));
     }
 
     private static void VerifyHostsEncoding()

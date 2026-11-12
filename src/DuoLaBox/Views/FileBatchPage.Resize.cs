@@ -33,9 +33,9 @@ public partial class FileBatchPage
 
         try
         {
-            var image = LoadImage(path);
-            ResizeWidthTextBox.Text = image.PixelWidth.ToString();
-            ResizeHeightTextBox.Text = image.PixelHeight.ToString();
+            var preview = GetPreview(path);
+            ResizeWidthTextBox.Text = preview.Width.ToString();
+            ResizeHeightTextBox.Text = preview.Height.ToString();
         }
         catch
         {
@@ -98,11 +98,11 @@ public partial class FileBatchPage
 
         try
         {
-            var image = LoadImage(path);
-            OriginalPreviewImage.Source = image;
-            TargetPreviewImage.Source = image;
+            var preview = GetPreview(path);
+            OriginalPreviewImage.Source = preview.Image;
+            TargetPreviewImage.Source = preview.Image;
             OriginalImageInfoText.Text =
-                $"原图 · {image.PixelWidth} × {image.PixelHeight}";
+                $"原图 · {preview.Width} × {preview.Height}";
 
             if (!int.TryParse(ResizeWidthTextBox.Text, out var width) ||
                 !int.TryParse(ResizeHeightTextBox.Text, out var height) ||
@@ -131,27 +131,66 @@ public partial class FileBatchPage
         }
     }
 
-    private static BitmapSource LoadImage(string path)
+    private const int PreviewDecodeWidth = 640;
+    private (string Path, DateTime Modified, ImagePreview Preview)? _cachedPreview;
+
+    // 每次输入尺寸都会刷新预览；同一张图只解码一次，而且只解码成预览所需的大小。
+    private ImagePreview GetPreview(string path)
+    {
+        var modified = File.GetLastWriteTimeUtc(path);
+        if (_cachedPreview is { } cached &&
+            cached.Modified == modified &&
+            string.Equals(cached.Path, path, StringComparison.OrdinalIgnoreCase))
+        {
+            return cached.Preview;
+        }
+
+        var preview = LoadPreview(path);
+        _cachedPreview = (path, modified, preview);
+        return preview;
+    }
+
+    internal static ImagePreview LoadPreview(string path)
     {
         using var stream = new FileStream(
             path,
             FileMode.Open,
             FileAccess.Read,
             FileShare.ReadWrite | FileShare.Delete);
+        // 只读取尺寸和方向，不解码像素。
         var decoder = BitmapDecoder.Create(
             stream,
-            BitmapCreateOptions.PreservePixelFormat,
-            BitmapCacheOption.OnLoad);
-        BitmapSource frame = decoder.Frames[0];
-        var transform = GetOrientationTransform(ReadOrientation(frame));
+            BitmapCreateOptions.PreservePixelFormat |
+            BitmapCreateOptions.DelayCreation,
+            BitmapCacheOption.None);
+        var frame = decoder.Frames[0];
+        var width = frame.PixelWidth;
+        var height = frame.PixelHeight;
+        var orientation = ReadOrientation(frame);
+
+        stream.Position = 0;
+        var image = new BitmapImage();
+        image.BeginInit();
+        image.CacheOption = BitmapCacheOption.OnLoad;
+        image.StreamSource = stream;
+        if (width > PreviewDecodeWidth)
+        {
+            image.DecodePixelWidth = PreviewDecodeWidth;
+        }
+        image.EndInit();
+
+        BitmapSource result = image;
+        var transform = GetOrientationTransform(orientation);
         if (transform is not null)
         {
             // 与输出一致：按 EXIF 方向把竖拍照片转正后再预览和读取尺寸。
-            frame = new TransformedBitmap(frame, transform);
+            result = new TransformedBitmap(result, transform);
         }
 
-        frame.Freeze();
-        return frame;
+        result.Freeze();
+        return orientation is >= 5 and <= 8
+            ? new ImagePreview(result, height, width)
+            : new ImagePreview(result, width, height);
     }
 
     private static int ReadOrientation(BitmapSource frame)
@@ -203,6 +242,7 @@ public partial class FileBatchPage
 
     private void ClearImagePreview()
     {
+        _cachedPreview = null;
         OriginalPreviewImage.Source = null;
         TargetPreviewImage.Source = null;
         OriginalImageInfoText.Text = "原图预览";
@@ -265,3 +305,5 @@ public partial class FileBatchPage
     }
 
 }
+
+internal sealed record ImagePreview(BitmapSource Image, int Width, int Height);

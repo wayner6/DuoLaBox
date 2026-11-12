@@ -12,12 +12,15 @@ public partial class FileBatchPage
     {
         if (_initialized)
         {
-            RefreshRenamePreview();
+            // 预览要逐个检查磁盘上的文件；连续输入时等停顿后再算一次。
+            _renamePreviewTimer.Stop();
+            _renamePreviewTimer.Start();
         }
     }
 
     private bool RefreshRenamePreview(bool showError = false)
     {
+        _renamePreviewTimer?.Stop();
         _renamePreview.Clear();
         if (_renameFiles.Count == 0)
         {

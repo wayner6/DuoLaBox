@@ -14,8 +14,8 @@ public sealed class TopMostMarkerManager : IDisposable
     private readonly DispatcherTimer _positionTimer;
     private readonly Dispatcher _dispatcher;
     private readonly NativeMethods.WinEventProc _winEventCallback;
-    private readonly nint _locationHook;
-    private readonly nint _minimizeHook;
+    private nint _locationHook;
+    private nint _minimizeHook;
     private int _positionUpdatePending;
 
     public TopMostMarkerManager()
@@ -27,6 +27,15 @@ public sealed class TopMostMarkerManager : IDisposable
             Interval = TimeSpan.FromMilliseconds(500)
         };
         _positionTimer.Tick += PositionTimer_Tick;
+    }
+
+    // 位置变化事件覆盖全系统（包括每一次鼠标移动），只在确实有置顶标记时才订阅。
+    private void InstallHooks()
+    {
+        if (_locationHook != nint.Zero || _minimizeHook != nint.Zero)
+        {
+            return;
+        }
 
         _locationHook = NativeMethods.SetWinEventHook(
             NativeMethods.EventObjectLocationChange,
@@ -46,6 +55,21 @@ public sealed class TopMostMarkerManager : IDisposable
             NativeMethods.WineventOutofcontext);
     }
 
+    private void RemoveHooks()
+    {
+        if (_locationHook != nint.Zero)
+        {
+            NativeMethods.UnhookWinEvent(_locationHook);
+            _locationHook = nint.Zero;
+        }
+
+        if (_minimizeHook != nint.Zero)
+        {
+            NativeMethods.UnhookWinEvent(_minimizeHook);
+            _minimizeHook = nint.Zero;
+        }
+    }
+
     public event Action<nint>? UnpinRequested;
 
     public IReadOnlyList<nint> MarkedWindows => [.. _markers.Keys];
@@ -63,6 +87,7 @@ public sealed class TopMostMarkerManager : IDisposable
         marker.Show();
         _markers[targetHandle] = marker;
         _trackedTargets[targetHandle] = 0;
+        InstallHooks();
         UpdateMarker(marker);
 
         if (!_positionTimer.IsEnabled)
@@ -85,6 +110,7 @@ public sealed class TopMostMarkerManager : IDisposable
         if (_markers.Count == 0)
         {
             _positionTimer.Stop();
+            RemoveHooks();
         }
     }
 
@@ -92,15 +118,7 @@ public sealed class TopMostMarkerManager : IDisposable
     {
         _positionTimer.Stop();
         _positionTimer.Tick -= PositionTimer_Tick;
-        if (_locationHook != nint.Zero)
-        {
-            NativeMethods.UnhookWinEvent(_locationHook);
-        }
-
-        if (_minimizeHook != nint.Zero)
-        {
-            NativeMethods.UnhookWinEvent(_minimizeHook);
-        }
+        RemoveHooks();
 
         foreach (var marker in _markers.Values.ToArray())
         {

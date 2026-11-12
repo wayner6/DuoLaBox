@@ -10,6 +10,8 @@ namespace DuoLaBox.Services;
 public sealed class WindowIconService
 {
     private readonly Dictionary<uint, ImageSource> _iconCache = [];
+    // 管理员或受保护进程的可执行文件读不到，每次重试都会抛出一次异常；记住结果。
+    private readonly HashSet<uint> _processIconUnavailable = [];
 
     public ImageSource? GetIcon(nint window, uint processId)
     {
@@ -18,9 +20,17 @@ public sealed class WindowIconService
             return cached;
         }
 
-        var icon =
-            TryGetProcessIcon(processId) ??
-            CreateImageSource(TryGetWindowIcon(window));
+        ImageSource? icon = null;
+        if (!_processIconUnavailable.Contains(processId))
+        {
+            icon = TryGetProcessIcon(processId);
+            if (icon is null)
+            {
+                _processIconUnavailable.Add(processId);
+            }
+        }
+
+        icon ??= CreateImageSource(TryGetWindowIcon(window));
         if (icon is not null)
         {
             _iconCache[processId] = icon;
@@ -38,6 +48,8 @@ public sealed class WindowIconService
                 _iconCache.Remove(processId);
             }
         }
+
+        _processIconUnavailable.IntersectWith(activeProcessIds);
     }
 
     private static nint TryGetWindowIcon(nint window)

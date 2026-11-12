@@ -32,6 +32,7 @@ public partial class FileBatchPage : WpfControls.UserControl
     private const int PendingPathLimit = 10000;
     private readonly List<(FileToolMode Mode, List<string> Paths)> _pendingOpenRequests = [];
     private bool _isBusy;
+    private readonly System.Windows.Threading.DispatcherTimer _renamePreviewTimer;
 
     internal bool IsBusy => _isBusy;
     public bool AreContextMenusBusy { get; private set; }
@@ -50,8 +51,39 @@ public partial class FileBatchPage : WpfControls.UserControl
         RenamePreviewList.ItemsSource = _renamePreview;
         LockingProcessesList.ItemsSource = _lockingProcesses;
         SelectedFilesList.ItemsSource = _renameFiles;
+        _renamePreviewTimer = new System.Windows.Threading.DispatcherTimer
+        {
+            Interval = TimeSpan.FromMilliseconds(200)
+        };
+        _renamePreviewTimer.Tick += (_, _) =>
+        {
+            _renamePreviewTimer.Stop();
+            RefreshRenamePreview();
+        };
+        AllowDrop = true;
+        DragOver += Page_DragOver;
+        Drop += Page_Drop;
         _initialized = true;
         RefreshRenamePreview();
+    }
+
+    private void Page_DragOver(object sender, System.Windows.DragEventArgs e)
+    {
+        e.Effects = !_isBusy && e.Data.GetDataPresent(System.Windows.DataFormats.FileDrop)
+            ? System.Windows.DragDropEffects.Copy
+            : System.Windows.DragDropEffects.None;
+        e.Handled = true;
+    }
+
+    private void Page_Drop(object sender, System.Windows.DragEventArgs e)
+    {
+        if (!_isBusy &&
+            e.Data.GetData(System.Windows.DataFormats.FileDrop) is string[] paths)
+        {
+            AddFiles(paths);
+        }
+
+        e.Handled = true;
     }
 
     public event Action<FileToolMode, bool>? ContextMenuSettingChanged;
@@ -216,7 +248,7 @@ public partial class FileBatchPage : WpfControls.UserControl
         StatusText.Text = skipped > 0
             ? $"已添加 {candidates.Length - skipped} 张图片，跳过 {skipped} 个不支持的文件。"
             : CurrentFiles.Count == 0
-                ? "请先添加文件。"
+                ? "请先添加文件，也可以把文件拖进窗口。"
                 : $"当前功能已选择 {CurrentFiles.Count} 个文件。";
     }
 
@@ -263,7 +295,7 @@ public partial class FileBatchPage : WpfControls.UserControl
 
         UpdateSelectedCount();
         StatusText.Text = CurrentFiles.Count == 0
-            ? "请先添加文件。"
+            ? "请先添加文件，也可以把文件拖进窗口。"
             : "已从当前功能的列表中移除文件。";
     }
 

@@ -141,9 +141,49 @@ internal static class CleanupRuleParser
         prepared = new PreparedCleanupRule(
             directoryPrefix,
             CreateGlobRegex(normalizedPattern),
-            recursive);
+            recursive,
+            CreateGlobLevels(expanded[(prefixSeparator + 1)..]));
         return true;
     }
+
+    // 通配规则按路径逐段匹配目录，遍历时只进入可能命中的子目录。
+    // 例如 User Data\*\Cache\Cache_Data\** 不必走遍每个浏览器配置文件的全部内容。
+    private static GlobLevels CreateGlobLevels(string pattern)
+    {
+        var segments = pattern.Split('\\');
+        var firstUnbounded = Array.FindIndex(
+            segments,
+            segment => segment.Contains("**", StringComparison.Ordinal));
+        return new GlobLevels(
+            [.. segments.Select(CreateGlobRegex)],
+            firstUnbounded < 0 ? segments.Length : firstUnbounded);
+    }
+
+    // index：该子目录名在通配部分中的位置（规则目录的直接子目录为 0）。
+    private static bool ShouldDescend(
+        PreparedCleanupRule rule,
+        string name,
+        int index)
+    {
+        if (rule.Levels is not { } levels)
+        {
+            return rule.Recursive;
+        }
+
+        if (index >= levels.FirstUnbounded)
+        {
+            return true;
+        }
+
+        return index < levels.Segments.Length - 1 &&
+               levels.Segments[index].IsMatch(name);
+    }
+
+    // depth：所在目录相对规则目录的深度。** 之前的每一段对应固定的一层，文件只可能出现在最后一段。
+    private static bool FilesCanMatch(PreparedCleanupRule rule, int depth) =>
+        rule.Levels is not { } levels ||
+        depth >= levels.FirstUnbounded ||
+        depth == levels.Segments.Length - 1;
 
     internal static IEnumerable<string> EnumerateFiles(
         PreparedCleanupRule rule,
@@ -156,8 +196,8 @@ internal static class CleanupRuleParser
             IgnoreInaccessible = true,
             AttributesToSkip = FileAttributes.ReparsePoint
         };
-        var directories = new Stack<string>();
-        directories.Push(rule.Directory);
+        var directories = new Stack<(string Path, int Depth)>();
+        directories.Push((rule.Directory, 0));
         while (directories.Count > 0)
         {
             cancellationToken.ThrowIfCancellationRequested();
@@ -166,15 +206,19 @@ internal static class CleanupRuleParser
                 yield break;
             }
 
-            var current = directories.Pop();
-            IEnumerator<string> entries;
+            var (current, depth) = directories.Pop();
+            var filesCanMatch = FilesCanMatch(rule, depth);
+            IEnumerator<FileSystemInfo> entries;
             try
             {
                 if (File.GetAttributes(current).HasFlag(FileAttributes.ReparsePoint))
                 {
                     continue;
                 }
-                entries = Directory.EnumerateFileSystemEntries(current, "*", options).GetEnumerator();
+                // 属性随目录项一起返回，不必为每个文件再查询一次。
+                entries = new DirectoryInfo(current)
+                    .EnumerateFileSystemInfos("*", options)
+                    .GetEnumerator();
             }
             catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
             {
@@ -207,29 +251,21 @@ internal static class CleanupRuleParser
                     }
 
                     var entry = entries.Current;
-                    FileAttributes attributes;
-                    try
-                    {
-                        attributes = File.GetAttributes(entry);
-                    }
-                    catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
-                    {
-                        continue;
-                    }
+                    var attributes = entry.Attributes;
                     if (attributes.HasFlag(FileAttributes.ReparsePoint))
                     {
                         continue;
                     }
                     if (attributes.HasFlag(FileAttributes.Directory))
                     {
-                        if (rule.Recursive)
+                        if (ShouldDescend(rule, entry.Name, depth))
                         {
-                            directories.Push(entry);
+                            directories.Push((entry.FullName, depth + 1));
                         }
                     }
-                    else
+                    else if (filesCanMatch)
                     {
-                        yield return entry;
+                        yield return entry.FullName;
                     }
                 }
             }
@@ -305,7 +341,10 @@ internal static class CleanupRuleParser
 internal sealed record PreparedCleanupRule(
     string Directory,
     Regex PathRegex,
-    bool Recursive);
+    bool Recursive,
+    GlobLevels? Levels = null);
+
+internal sealed record GlobLevels(Regex[] Segments, int FirstUnbounded);
 
 internal sealed record ParsedCleanupRule(
     string Path,

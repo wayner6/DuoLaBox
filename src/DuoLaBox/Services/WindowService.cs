@@ -7,6 +7,8 @@ namespace DuoLaBox.Services;
 public sealed class WindowService : IWindowService
 {
     private readonly WindowIconService _windowIconService = new();
+    // 列表每秒刷新一次；进程名不会变，不必每次都重新查询。
+    private readonly Dictionary<uint, string> _processNames = [];
 
     private static readonly HashSet<string> IgnoredInfrastructureProcesses =
         new(StringComparer.OrdinalIgnoreCase)
@@ -55,7 +57,12 @@ public sealed class WindowService : IWindowService
                 return true;
             }
 
-            var processName = TryGetProcessName(processId);
+            if (!_processNames.TryGetValue(processId, out var processName))
+            {
+                processName = TryGetProcessName(processId);
+                _processNames[processId] = processName;
+            }
+
             if (IgnoredInfrastructureProcesses.Contains(processName))
             {
                 return true;
@@ -78,8 +85,16 @@ public sealed class WindowService : IWindowService
             return true;
         }, nint.Zero);
 
-        _windowIconService.Prune(
-            windows.Select(window => window.ProcessId).ToHashSet());
+        var activeProcessIds =
+            windows.Select(window => window.ProcessId).ToHashSet();
+        _windowIconService.Prune(activeProcessIds);
+        foreach (var processId in _processNames.Keys.ToArray())
+        {
+            if (!activeProcessIds.Contains(processId))
+            {
+                _processNames.Remove(processId);
+            }
+        }
 
         return windows
             .OrderByDescending(window => window.IsTopMost)

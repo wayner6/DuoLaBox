@@ -36,6 +36,16 @@ public sealed class ShellContextMenuService
                 return false;
             }
 
+            // 每次启动都会同步一遍；注册表已是目标状态时不写入，也不让资源管理器刷新。
+            var definition = GetDefinition(mode);
+            var registeredCommand = ReadRegisteredCommand(definition);
+            if (enabled
+                    ? registeredCommand == BuildCommand(definition, executablePath)
+                    : registeredCommand is null)
+            {
+                return true;
+            }
+
             if (enabled)
             {
                 EnsureMenuRoot(executablePath);
@@ -93,8 +103,21 @@ public sealed class ShellContextMenuService
         using var command = key.CreateSubKey("command", true);
         command.SetValue(
             string.Empty,
-            $"\"{executablePath}\" --file-tool " +
-            $"{definition.CommandMode} \"%1\"");
+            BuildCommand(definition, executablePath));
+    }
+
+    private static string BuildCommand(
+        ContextMenuDefinition definition,
+        string executablePath) =>
+        $"\"{executablePath}\" --file-tool " +
+        $"{definition.CommandMode} \"%1\"";
+
+    private static string? ReadRegisteredCommand(
+        ContextMenuDefinition definition)
+    {
+        using var command = Registry.CurrentUser.OpenSubKey(
+            $"{SubMenuRoot}\\{definition.KeyName}\\command");
+        return command?.GetValue(string.Empty) as string;
     }
 
     private static void RemoveSubCommand(FileToolMode mode)
