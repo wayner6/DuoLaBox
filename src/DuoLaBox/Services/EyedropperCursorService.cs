@@ -1,6 +1,7 @@
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
+using System.IO;
 
 namespace DuoLaBox.Services;
 
@@ -32,15 +33,33 @@ public sealed class EyedropperCursorService : IDisposable
             CurrentDomain_ProcessExit;
     }
 
+    private static string MarkerPath =>
+        AppIdentity.GetLocalDataPath("cursor-override.marker");
+
+    // 取色必须读取屏幕上未经遮挡的原始像素，所以仍然替换系统指针。
+    // 指针替换期间留一个标记文件：进程被强行结束后，下次启动据此恢复系统指针。
+    public static void RecoverAfterAbnormalExit()
+    {
+        if (!File.Exists(MarkerPath))
+        {
+            return;
+        }
+
+        RestoreSystemCursors();
+        TryDeleteMarker();
+    }
+
     public bool Apply()
     {
         Restore();
+        TryWriteMarker();
         foreach (var cursorId in CursorIds)
         {
             var cursor = CreateCursor();
             if (cursor == nint.Zero)
             {
                 RestoreSystemCursors();
+                TryDeleteMarker();
                 return false;
             }
 
@@ -48,6 +67,7 @@ public sealed class EyedropperCursorService : IDisposable
             {
                 NativeMethods.DestroyCursor(cursor);
                 RestoreSystemCursors();
+                TryDeleteMarker();
                 return false;
             }
         }
@@ -64,7 +84,35 @@ public sealed class EyedropperCursorService : IDisposable
         }
 
         RestoreSystemCursors();
+        TryDeleteMarker();
         _isApplied = false;
+    }
+
+    private static void TryWriteMarker()
+    {
+        try
+        {
+            Directory.CreateDirectory(Path.GetDirectoryName(MarkerPath)!);
+            File.WriteAllText(MarkerPath, string.Empty);
+        }
+        catch (Exception exception) when (
+            exception is IOException or UnauthorizedAccessException)
+        {
+            // 没有标记只是少一层崩溃后的恢复，不影响取色。
+        }
+    }
+
+    private static void TryDeleteMarker()
+    {
+        try
+        {
+            File.Delete(MarkerPath);
+        }
+        catch (Exception exception) when (
+            exception is IOException or UnauthorizedAccessException)
+        {
+            // 残留的标记只会让下次启动多恢复一次系统指针。
+        }
     }
 
     public void Dispose()

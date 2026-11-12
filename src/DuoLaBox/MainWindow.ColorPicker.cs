@@ -53,6 +53,14 @@ public partial class MainWindow
             MessageBoxImage.Warning);
     }
 
+    private void ScreenColorPicker_PickingCancelled()
+    {
+        _colorPreviewWindow.HidePreview();
+        ShowFromTray();
+        ShowPage(ColorPickerPage, ColorPickerNavButton);
+        ColorPickerPage.SetPicking(false);
+    }
+
     private void ScreenColorPicker_PreviewChanged(
         ScreenColorSample sample)
     {

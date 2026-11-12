@@ -10,6 +10,7 @@ public sealed class DiskCleanupService
 {
     private const int CandidateLimit = 20000;
     private const int DeleteAttemptCount = 3;
+    private const string StagingFolderName = "CleanupStaging";
     private static readonly TimeSpan ScanTimeLimit =
         TimeSpan.FromSeconds(20);
 
@@ -18,7 +19,7 @@ public sealed class DiskCleanupService
     public DiskCleanupService()
     {
         _stagingDirectory =
-            AppIdentity.GetLocalDataPath("CleanupStaging");
+            AppIdentity.GetLocalDataPath(StagingFolderName);
     }
 
     public bool IsAdministrator
@@ -52,7 +53,11 @@ public sealed class DiskCleanupService
     {
         var items = candidates.Select(item =>
             new CleanupStagedItem(item.Path, item.Rule)).ToArray();
-        return Task.Run(() => Execute(items));
+        var verifyOpenedPath = IsAdministrator;
+        return Task.Run(() => Execute(
+            items,
+            verifyOpenedPath,
+            rulesExpanded: false));
     }
 
     public StagedFile Stage(
@@ -66,7 +71,7 @@ public sealed class DiskCleanupService
             .Where(item => item.IsSelected)
             .Select(item => new CleanupStagedItem(
                 item.Path,
-                item.Rule))
+                CleanupRuleParser.Expand(item.Rule)))
             .ToArray();
         File.WriteAllText(path, JsonSerializer.Serialize(items));
         return StagedFile.Create(path);
@@ -79,7 +84,10 @@ public sealed class DiskCleanupService
         var fullPath = ValidateStagingPath(stagingPath);
         var bytes = new StagedFile(fullPath, expectedHash).ReadVerifiedBytes();
         var items = JsonSerializer.Deserialize<CleanupStagedItem[]>(bytes) ?? [];
-        var result = Execute(items);
+        var result = Execute(
+            items,
+            verifyOpenedPath: IsAdministrator,
+            rulesExpanded: true);
         File.WriteAllText(
             GetResultPath(fullPath),
             JsonSerializer.Serialize(result));
@@ -125,6 +133,8 @@ public sealed class DiskCleanupService
         var recognizedRuleCount = 0;
         var invalidRuleCount = 0;
         var inaccessibleCount = 0;
+        var recentTemporaryCount = 0;
+        var scanStartedUtc = DateTime.UtcNow;
         var limitReached = false;
 
         foreach (var rule in rules)
@@ -175,6 +185,21 @@ public sealed class DiskCleanupService
                             continue;
                         }
 
+                        if (CleanupSafety.IsRuntimeExtractionPath(fullPath))
+                        {
+                            continue;
+                        }
+
+                        if (CleanupSafety.IsRecentTemporaryFile(
+                                fullPath,
+                                info,
+                                scanStartedUtc))
+                        {
+                            uniquePaths.Add(fullPath);
+                            recentTemporaryCount++;
+                            continue;
+                        }
+
                         var size = info.Length;
                         uniquePaths.Add(fullPath);
                         candidates.Add(new CleanupCandidate
@@ -215,11 +240,14 @@ public sealed class DiskCleanupService
             recognizedRuleCount,
             invalidRuleCount,
             inaccessibleCount,
-            limitReached);
+            limitReached,
+            recentTemporaryCount);
     }
 
-    private static CleanupExecutionResult Execute(
-        IEnumerable<CleanupStagedItem> items)
+    internal static CleanupExecutionResult Execute(
+        IEnumerable<CleanupStagedItem> items,
+        bool verifyOpenedPath,
+        bool rulesExpanded)
     {
         var deleted = 0;
         var failed = 0;
@@ -231,7 +259,10 @@ public sealed class DiskCleanupService
         {
             try
             {
-                if (!CleanupRuleParser.TryPrepare(item.Rule, out var prepared))
+                if (!CleanupRuleParser.TryPrepare(
+                        item.Rule,
+                        out var prepared,
+                        expand: !rulesExpanded))
                 {
                     failed++;
                     failedPaths.Add(item.Path);
@@ -244,7 +275,8 @@ public sealed class DiskCleanupService
                 var fullPath = Path.GetFullPath(item.Path);
                 if (!CleanupRuleParser.IsFileAllowed(
                         fullPath,
-                        prepared))
+                        prepared) ||
+                    CleanupSafety.IsRuntimeExtractionPath(fullPath))
                 {
                     failed++;
                     failedPaths.Add(fullPath);
@@ -270,12 +302,20 @@ public sealed class DiskCleanupService
                 {
                     try
                     {
-                        if (info.IsReadOnly)
+                        if (verifyOpenedPath)
                         {
-                            info.IsReadOnly = false;
+                            VerifiedFileDelete.Delete(fullPath);
+                        }
+                        else
+                        {
+                            if (info.IsReadOnly)
+                            {
+                                info.IsReadOnly = false;
+                            }
+
+                            File.Delete(fullPath);
                         }
 
-                        File.Delete(fullPath);
                         deleteException = null;
                         break;
                     }
@@ -351,6 +391,11 @@ public sealed class DiskCleanupService
             return CleanupFailureKind.AccessDenied;
         }
 
+        if (exception is CleanupPathChangedException)
+        {
+            return CleanupFailureKind.ValidationRejected;
+        }
+
         var error = exception.HResult & 0xFFFF;
         return error switch
         {
@@ -361,14 +406,10 @@ public sealed class DiskCleanupService
     }
 
 
-    private string ValidateStagingPath(string path)
+    private static string ValidateStagingPath(string path)
     {
         var fullPath = Path.GetFullPath(path);
-        var root = Path.GetFullPath(_stagingDirectory)
-            .TrimEnd('\\') + "\\";
-        if (!fullPath.StartsWith(
-                root,
-                StringComparison.OrdinalIgnoreCase))
+        if (!StagingLocation.IsTrusted(fullPath, StagingFolderName))
         {
             throw new InvalidOperationException(
                 "拒绝了不受信任的清理任务路径。");

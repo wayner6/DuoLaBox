@@ -1,5 +1,6 @@
 using System.Windows;
 using DuoLaBox.Models;
+using DuoLaBox.Services;
 using MessageBox = System.Windows.MessageBox;
 
 namespace DuoLaBox.Views;
@@ -35,11 +36,16 @@ public partial class FileBatchPage
                 return;
             }
 
-            var names = string.Join("、", processes.Select(process => process.ApplicationName));
+            var plan = FileLockService.PlanRelease(processes, Environment.ProcessId);
+            if (!plan.CanProceed)
+            {
+                StatusText.Text = plan.Message;
+                return;
+            }
+
             if (MessageBox.Show(
                     Window.GetWindow(this),
-                    $"将请求以下程序关闭以解除占用：\n\n{names}\n\n" +
-                    "请先保存这些程序中的工作。是否继续？",
+                    plan.Message,
                     "确认解除文件占用",
                     MessageBoxButton.YesNo,
                     MessageBoxImage.Warning) != MessageBoxResult.Yes)
@@ -47,12 +53,19 @@ public partial class FileBatchPage
                 return;
             }
 
-            var success = await _fileLockService.ReleaseLocksAsync(files);
+            var success = await _fileLockService.ReleaseLocksAsync(
+                files, restoreShell: plan.RestoreShell);
             var remaining = await _fileLockService.GetLockingProcessesAsync(files);
             UpdateLockingProcesses(remaining);
             StatusText.Text = success && remaining.Count == 0
                 ? "已解除文件占用。"
                 : "部分程序未能正常关闭，文件可能仍被占用。";
+            if (remaining.Count > 0 && remaining.All(process => process.IsCritical))
+            {
+                StatusText.Text = "仍由系统关键进程占用，无法解除。";
+                return;
+            }
+
             if (remaining.Count == 0 ||
                 MessageBox.Show(
                     Window.GetWindow(this),
@@ -65,7 +78,10 @@ public partial class FileBatchPage
                 return;
             }
 
-            await _fileLockService.ReleaseLocksAsync(files, force: true);
+            await _fileLockService.ReleaseLocksAsync(
+                files,
+                force: true,
+                restoreShell: plan.RestoreShell || remaining.Any(process => process.IsExplorer));
             remaining = await _fileLockService.GetLockingProcessesAsync(files);
             UpdateLockingProcesses(remaining);
             StatusText.Text = remaining.Count == 0

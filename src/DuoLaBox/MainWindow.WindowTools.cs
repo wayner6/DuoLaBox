@@ -91,9 +91,15 @@ public partial class MainWindow
         RefreshWindows(force: true);
     }
 
-    private void WindowPicker_InvalidWindowTopClick()
+    private void WindowPicker_InvalidWindowClick()
     {
-        PickerStatusText.Text = "没有命中窗口顶部，请再点击一次目标窗口的顶部区域。";
+        PickerStatusText.Text = "没有点中可置顶的窗口，请再点击一次目标窗口；按 Esc 或点击右键取消。";
+    }
+
+    private void WindowPicker_Cancelled()
+    {
+        PickerStatusText.Text = "已取消选择。点击按钮可重新开始。";
+        ResetMousePickerButton();
     }
 
     private void TopMostCoordinator_MarkerUnpinned(nint handle)
@@ -169,7 +175,7 @@ public partial class MainWindow
     {
         _windowPicker.Start();
         MousePickButtonText.Text = "取消选择";
-        PickerStatusText.Text = "请点击目标窗口的顶部区域；按 Esc 可取消。";
+        PickerStatusText.Text = "请点击要置顶的窗口；按 Esc 或点击右键取消。";
 
     }
 

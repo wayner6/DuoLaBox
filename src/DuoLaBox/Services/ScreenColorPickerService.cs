@@ -39,6 +39,9 @@ public sealed class ScreenColorPickerService : IDisposable
 
     public event Action? PickingFailed;
 
+    // 用户点击右键放弃取色。
+    public event Action? PickingCancelled;
+
     public bool IsActive => _mouseHook != nint.Zero;
 
     public bool Start()
@@ -116,8 +119,15 @@ public sealed class ScreenColorPickerService : IDisposable
             _dispatcher.BeginInvoke(() => PublishPickedColor(point));
             return new nint(1);
         }
-        else if (message == (nint)NativeMethods.WmLButtonDown)
+        else if (message == (nint)NativeMethods.WmLButtonDown ||
+                 message == (nint)NativeMethods.WmRButtonDown)
         {
+            return new nint(1);
+        }
+        else if (message == (nint)NativeMethods.WmRButtonUp)
+        {
+            Cancel();
+            _dispatcher.BeginInvoke(() => PickingCancelled?.Invoke());
             return new nint(1);
         }
 

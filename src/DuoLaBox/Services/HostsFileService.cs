@@ -6,12 +6,13 @@ namespace DuoLaBox.Services;
 
 public sealed class HostsFileService
 {
+    private const string StagingFolderName = "HostsStaging";
     private readonly string _stagingDirectory;
 
     public HostsFileService()
     {
         _stagingDirectory =
-            AppIdentity.GetLocalDataPath("HostsStaging");
+            AppIdentity.GetLocalDataPath(StagingFolderName);
     }
 
     public string HostsPath => Path.Combine(
@@ -75,12 +76,7 @@ public sealed class HostsFileService
         try
         {
             var fullPath = Path.GetFullPath(stagingPath);
-            var stagingRoot = Path.GetFullPath(_stagingDirectory)
-                .TrimEnd(Path.DirectorySeparatorChar) +
-                Path.DirectorySeparatorChar;
-            if (!fullPath.StartsWith(
-                    stagingRoot,
-                    StringComparison.OrdinalIgnoreCase))
+            if (!StagingLocation.IsTrusted(fullPath, StagingFolderName))
             {
                 return new HostsOperationResult(
                     false,

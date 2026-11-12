@@ -201,6 +201,9 @@ try
             cleanupDirectory,
             "current-cache.tmp");
         File.WriteAllText(cleanupFile, "cleanup");
+        // 临时目录中近 24 小时内写入的文件不会被列为清理候选。
+        File.SetCreationTimeUtc(cleanupFile, DateTime.UtcNow.AddDays(-3));
+        File.SetLastWriteTimeUtc(cleanupFile, DateTime.UtcNow.AddDays(-3));
 
         var cleanupService = new DiskCleanupService();
         var rootRuleScan = await cleanupService.ScanAsync(

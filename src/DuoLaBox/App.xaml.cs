@@ -82,6 +82,8 @@ public partial class App : System.Windows.Application
             return;
         }
 
+        // 只有主实例执行：此时没有别的实例正在取色。
+        EyedropperCursorService.RecoverAfterAbnormalExit();
         var window = new MainWindow();
         MainWindow = window;
         window.InitializeStartup();

@@ -31,7 +31,8 @@ public sealed record CleanupScanResult(
     int RecognizedRuleCount,
     int InvalidRuleCount,
     int InaccessibleItemCount,
-    bool ReachedLimit)
+    bool ReachedLimit,
+    int RecentTemporaryCount = 0)
 {
     public long TotalSize => Candidates.Sum(item => item.Size);
 }

@@ -4,60 +4,10 @@ using System.Drawing.Imaging;
 
 namespace DuoLaBox.Services;
 
-public sealed class PinCursorService : IDisposable
+internal static class PinCursorFactory
 {
-    private bool _isApplied;
-
-    public PinCursorService()
-    {
-        AppDomain.CurrentDomain.ProcessExit += CurrentDomain_ProcessExit;
-    }
-
-    public bool Apply()
-    {
-        Restore();
-
-        var cursor = CreatePinCursor();
-        if (cursor == nint.Zero)
-        {
-            return false;
-        }
-
-        if (!NativeMethods.SetSystemCursor(
-                cursor,
-                NativeMethods.OcrNormal))
-        {
-            NativeMethods.DestroyCursor(cursor);
-            return false;
-        }
-
-        // SetSystemCursor 接管并销毁传入句柄。
-        _isApplied = true;
-        return true;
-    }
-
-    public void Restore()
-    {
-        if (!_isApplied)
-        {
-            return;
-        }
-
-        NativeMethods.SystemParametersInfo(
-            NativeMethods.SpiSetCursors,
-            0,
-            nint.Zero,
-            0);
-        _isApplied = false;
-    }
-
-    public void Dispose()
-    {
-        Restore();
-        AppDomain.CurrentDomain.ProcessExit -= CurrentDomain_ProcessExit;
-    }
-
-    private static nint CreatePinCursor()
+    // 调用方负责用 DestroyCursor 释放返回的句柄；失败时返回 0。
+    internal static nint Create()
     {
         using var bitmap = new Bitmap(
             32,
@@ -123,10 +73,5 @@ public sealed class PinCursorService : IDisposable
         NativeMethods.DeleteObject(iconInfo.ColorBitmap);
         NativeMethods.DestroyIcon(icon);
         return cursor;
-    }
-
-    private void CurrentDomain_ProcessExit(object? sender, EventArgs e)
-    {
-        Restore();
     }
 }

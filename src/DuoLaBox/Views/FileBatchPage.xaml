@@ -276,7 +276,7 @@
                                             <ColumnDefinition Width="Auto"/>
                                         </Grid.ColumnDefinitions>
                                         <TextBlock FontWeight="SemiBold"
-                                                   Text="{Binding ApplicationName}"/>
+                                                   Text="{Binding DisplayName}"/>
                                         <TextBlock Grid.Column="1"
                                                    Foreground="{DynamicResource SecondaryTextBrush}">
                                             <Run Text="PID "/>

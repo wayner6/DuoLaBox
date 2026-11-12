@@ -262,7 +262,7 @@
                                    Margin="0,3,0,0"
                                    FontSize="12"
                                    Foreground="{DynamicResource SecondaryTextBrush}"
-                                   Text="点击按钮，再点击目标窗口的顶部区域。"/>
+                                   Text="点击按钮，再点击要置顶的窗口。"/>
                     </StackPanel>
 
                     <Button x:Name="MousePickButton"

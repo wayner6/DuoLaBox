@@ -64,6 +64,18 @@ internal static class NativeMethods
     internal const int ShilJumbo = 4;
     internal const uint IldTransparent = 0x00000001;
     internal const int ErrorMoreData = 234;
+    internal const uint WmRButtonDown = 0x0204;
+    internal const uint WmRButtonUp = 0x0205;
+    internal const uint AccessDelete = 0x00010000;
+    internal const uint FileReadAttributes = 0x0080;
+    internal const uint FileWriteAttributes = 0x0100;
+    internal const uint FileShareAll = 0x00000007;
+    internal const uint OpenExisting = 3;
+    internal const uint FileFlagOpenReparsePoint = 0x00200000;
+    internal const int FileDispositionInfoClass = 4;
+    internal const int RmExplorer = 4;
+    internal const int RmService = 3;
+    internal const int RmCritical = 1000;
 
     internal static readonly nint HwndTopMost = new(-1);
     internal static readonly nint HwndNoTopMost = new(-2);
@@ -255,7 +267,66 @@ internal static class NativeMethods
         nint statusCallback);
 
     [DllImport("rstrtmgr.dll")]
+    internal static extern int RmRestart(
+        uint sessionHandle,
+        int restartFlags,
+        nint statusCallback);
+
+    [DllImport("rstrtmgr.dll")]
     internal static extern int RmEndSession(uint sessionHandle);
+
+    [DllImport(
+        "kernel32.dll",
+        EntryPoint = "CreateFileW",
+        CharSet = CharSet.Unicode,
+        SetLastError = true)]
+    internal static extern Microsoft.Win32.SafeHandles.SafeFileHandle CreateFile(
+        string fileName,
+        uint desiredAccess,
+        uint shareMode,
+        nint securityAttributes,
+        uint creationDisposition,
+        uint flagsAndAttributes,
+        nint templateFile);
+
+    [DllImport(
+        "kernel32.dll",
+        EntryPoint = "GetFinalPathNameByHandleW",
+        CharSet = CharSet.Unicode,
+        SetLastError = true)]
+    internal static extern uint GetFinalPathNameByHandle(
+        Microsoft.Win32.SafeHandles.SafeFileHandle file,
+        StringBuilder path,
+        uint pathLength,
+        uint flags);
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    internal static extern bool SetFileInformationByHandle(
+        Microsoft.Win32.SafeHandles.SafeFileHandle file,
+        int informationClass,
+        ref byte information,
+        uint informationSize);
+
+    [DllImport(
+        "kernel32.dll",
+        EntryPoint = "GetLongPathNameW",
+        CharSet = CharSet.Unicode,
+        SetLastError = true)]
+    internal static extern uint GetLongPathName(
+        string path,
+        StringBuilder longPath,
+        uint longPathLength);
+
+    [DllImport(
+        "kernel32.dll",
+        EntryPoint = "GetShortPathNameW",
+        CharSet = CharSet.Unicode,
+        SetLastError = true)]
+    internal static extern uint GetShortPathName(
+        string path,
+        StringBuilder shortPath,
+        uint shortPathLength);
 
     [DllImport("user32.dll")]
     internal static extern nint SetWinEventHook(

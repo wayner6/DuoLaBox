@@ -55,14 +55,17 @@ internal static class CleanupRuleParser
         return rules;
     }
 
+    // expand: false 用于提权进程。规则已由发起清理的用户展开，
+    // 不能再按管理员账户的环境变量和用户目录解释一次。
     internal static bool TryPrepare(
         string rule,
-        out PreparedCleanupRule prepared)
+        out PreparedCleanupRule prepared,
+        bool expand = true)
     {
         prepared = default!;
         try
         {
-            return TryPrepareCore(rule, out prepared);
+            return TryPrepareCore(rule, expand, out prepared);
         }
         catch (Exception exception) when (exception is ArgumentException or NotSupportedException or IOException)
         {
@@ -70,7 +73,9 @@ internal static class CleanupRuleParser
         }
     }
 
-    private static bool TryPrepareCore(string rule, out PreparedCleanupRule prepared)
+    internal static string Expand(string rule) => ExpandPlaceholders(rule);
+
+    private static bool TryPrepareCore(string rule, bool expand, out PreparedCleanupRule prepared)
     {
         prepared = default!;
         // Reject invalid characters before Windows environment expansion can truncate at NUL.
@@ -78,7 +83,7 @@ internal static class CleanupRuleParser
         {
             return false;
         }
-        var expanded = ExpandPlaceholders(rule).Replace('/', '\\');
+        var expanded = (expand ? ExpandPlaceholders(rule) : rule).Replace('/', '\\');
         if (!Path.IsPathFullyQualified(expanded) ||
             expanded.IndexOfAny(Path.GetInvalidPathChars()) >= 0)
         {

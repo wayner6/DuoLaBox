@@ -32,6 +32,7 @@ internal static class Program
                 VerifyHostsEditor();
                 await VerifyRenameAsync();
                 await StorageAndScanChecks.RunAsync();
+                SafetyChecks.Run();
                 await ConcurrencyChecks.RunAsync();
                 Console.WriteLine("REGRESSION_VERIFICATION_OK");
                 application.Shutdown(0);

@@ -56,12 +56,16 @@ public partial class DiskCleanupPage :
         var limitText = result.ReachedLimit
             ? " 已达到本次扫描的时间或数量上限，当前为部分结果。"
             : string.Empty;
+        var recentText = result.RecentTemporaryCount > 0
+            ? $" 另有 {result.RecentTemporaryCount} 个近 24 小时内写入的临时文件可能仍在使用，已保留。"
+            : string.Empty;
         CleanupStatusTitleText.Text = "扫描完成";
         CleanupStatusText.Text =
             $"共读取 {result.TotalRuleCount} 条规则，" +
             $"{result.RecognizedRuleCount} 条已识别，" +
             $"{result.InvalidRuleCount} 条格式无效，" +
             $"{result.InaccessibleItemCount} 项无法访问。" +
+            recentText +
             limitText;
     }
 

@@ -142,12 +142,26 @@ internal static class StorageAndScanChecks
         var child = Path.Combine(scanDirectory, "child");
         Directory.CreateDirectory(child);
         File.WriteAllText(Path.Combine(child, "second.tmp"), "safe test data");
+        // The fixtures live under %TEMP%, where files written in the last 24 hours are kept.
+        foreach (var fixture in new[] { first, sibling, Path.Combine(child, "second.tmp") })
+        {
+            var old = DateTime.UtcNow.AddDays(-3);
+            File.SetCreationTimeUtc(fixture, old);
+            File.SetLastWriteTimeUtc(fixture, old);
+        }
+        var freshDirectory = Path.Combine(directory, "fresh");
+        Directory.CreateDirectory(freshDirectory);
+        File.WriteAllText(Path.Combine(freshDirectory, "installer-in-progress.tmp"), "safe test data");
+
         for (var index = 0; index < 32; index++)
         {
             Directory.CreateDirectory(Path.Combine(child, $"empty-{index}", "nested"));
         }
 
         var service = new DiskCleanupService();
+        var fresh = await service.ScanAsync(freshDirectory + Path.DirectorySeparatorChar);
+        Assert(fresh.Candidates.Count == 0 && fresh.RecentTemporaryCount == 1,
+            "A temporary file written moments ago was offered for deletion.");
         var invalid = scanDirectory + "\\invalid\0name.tmp";
         var mixed = await service.ScanAsync(invalid + "\r\nrelative.tmp\r\n" + first);
         Assert(mixed.InvalidRuleCount == 2 && mixed.RecognizedRuleCount == 1 &&

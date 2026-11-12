@@ -63,7 +63,8 @@ public partial class MainWindow : Window
 
         _refreshTimer.Tick += RefreshTimer_Tick;
         _windowPicker.WindowPicked += WindowPicker_WindowPicked;
-        _windowPicker.InvalidWindowTopClick += WindowPicker_InvalidWindowTopClick;
+        _windowPicker.InvalidWindowClick += WindowPicker_InvalidWindowClick;
+        _windowPicker.Cancelled += WindowPicker_Cancelled;
         _topMostCoordinator.MarkerUnpinned += TopMostCoordinator_MarkerUnpinned;
         _topMostCoordinator.MarkerUnpinFailed += TopMostCoordinator_MarkerUnpinFailed;
         _trayIcon.ShowRequested += TrayIcon_ShowRequested;
@@ -108,6 +109,8 @@ public partial class MainWindow : Window
             ScreenColorPicker_ColorPicked;
         _screenColorPicker.PickingFailed +=
             ScreenColorPicker_PickingFailed;
+        _screenColorPicker.PickingCancelled +=
+            ScreenColorPicker_PickingCancelled;
         _screenColorPicker.PreviewChanged +=
             ScreenColorPicker_PreviewChanged;
         _systemThemeModeService.ModeChanged +=
@@ -227,7 +230,8 @@ public partial class MainWindow : Window
         _refreshTimer.Tick -= RefreshTimer_Tick;
 
         _windowPicker.WindowPicked -= WindowPicker_WindowPicked;
-        _windowPicker.InvalidWindowTopClick -= WindowPicker_InvalidWindowTopClick;
+        _windowPicker.InvalidWindowClick -= WindowPicker_InvalidWindowClick;
+        _windowPicker.Cancelled -= WindowPicker_Cancelled;
         _topMostCoordinator.MarkerUnpinned -= TopMostCoordinator_MarkerUnpinned;
         _topMostCoordinator.MarkerUnpinFailed -= TopMostCoordinator_MarkerUnpinFailed;
         _trayIcon.ShowRequested -= TrayIcon_ShowRequested;
@@ -272,6 +276,8 @@ public partial class MainWindow : Window
             ScreenColorPicker_ColorPicked;
         _screenColorPicker.PickingFailed -=
             ScreenColorPicker_PickingFailed;
+        _screenColorPicker.PickingCancelled -=
+            ScreenColorPicker_PickingCancelled;
         _screenColorPicker.PreviewChanged -=
             ScreenColorPicker_PreviewChanged;
         _systemThemeModeService.ModeChanged -=
