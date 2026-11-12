@@ -143,6 +143,37 @@
                 </Grid>
             </Border>
 
+            <Border Margin="0,12,0,0"
+                    Padding="20,18"
+                    Background="{DynamicResource SurfaceBrush}"
+                    BorderBrush="{DynamicResource BorderBrush}"
+                    BorderThickness="1"
+                    CornerRadius="8">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock FontSize="15"
+                                   FontWeight="SemiBold"
+                                   Text="清除系统集成"/>
+                        <TextBlock Margin="0,5,0,0"
+                                   FontSize="12"
+                                   Foreground="{DynamicResource SecondaryTextBrush}"
+                                   Text="移除右键菜单和开机启动项。删除或移动 DuoLaBox 之前建议先执行。"
+                                   TextWrapping="Wrap"/>
+                    </StackPanel>
+                    <Button x:Name="ClearIntegrationsButton"
+                            Grid.Column="1"
+                            Width="164"
+                            Height="38"
+                            Click="ClearIntegrationsButton_Click"
+                            Content="清除"
+                            Style="{StaticResource SecondaryButtonStyle}"/>
+                </Grid>
+            </Border>
+
             <Border Margin="0,12,0,4"
                     Padding="20,18"
                     Background="{DynamicResource SurfaceBrush}"

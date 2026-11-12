@@ -38,8 +38,6 @@ public partial class MainWindow : Window
     private bool _startupInitialized;
     private readonly SemaphoreSlim _externalIntegrationGate = new(1, 1);
 
-    public bool SilentStartupEnabled => _settings.SilentStartup;
-
     public MainWindow()
     {
         _settings = _settingsService.Load();
@@ -77,6 +75,8 @@ public partial class MainWindow : Window
         SettingsPage.SilentStartupChanged +=
             SettingsPage_SilentStartupChanged;
         SettingsPage.ThemeChanged += SettingsPage_ThemeChanged;
+        SettingsPage.ClearIntegrationsRequested +=
+            SettingsPage_ClearIntegrationsRequested;
         FileBatchPage.ContextMenuSettingChanged +=
             FileBatchPage_ContextMenuSettingChanged;
         SystemToolsPage.ManualModeChanged +=
@@ -244,6 +244,8 @@ public partial class MainWindow : Window
         SettingsPage.SilentStartupChanged -=
             SettingsPage_SilentStartupChanged;
         SettingsPage.ThemeChanged -= SettingsPage_ThemeChanged;
+        SettingsPage.ClearIntegrationsRequested -=
+            SettingsPage_ClearIntegrationsRequested;
         FileBatchPage.ContextMenuSettingChanged -=
             FileBatchPage_ContextMenuSettingChanged;
         SystemToolsPage.ManualModeChanged -=

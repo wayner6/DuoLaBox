@@ -17,18 +17,18 @@ public sealed class ImageResizeService
     public static bool IsSupported(string path) =>
         SupportedExtensions.Contains(Path.GetExtension(path));
 
-    public Task<IReadOnlyList<string>> ResizeAsync(
+    public Task<ImageResizeResult> ResizeAsync(
         IEnumerable<string> paths,
         int width,
         int height,
         bool preserveAspectRatio)
     {
         var files = paths.ToArray();
-        return Task.Run<IReadOnlyList<string>>(
+        return Task.Run(
             () => Resize(files, width, height, preserveAspectRatio));
     }
 
-    private static IReadOnlyList<string> Resize(
+    private static ImageResizeResult Resize(
         IEnumerable<string> paths,
         int width,
         int height,
@@ -43,16 +43,53 @@ public sealed class ImageResizeService
         }
 
         var outputs = new List<string>();
+        var failures = new List<ImageResizeFailure>();
         foreach (var sourcePath in paths
                      .Where(IsSupported)
                      .Distinct(StringComparer.OrdinalIgnoreCase))
         {
+            try
+            {
+                outputs.Add(ResizeOne(
+                    sourcePath,
+                    width,
+                    height,
+                    preserveAspectRatio));
+            }
+            catch (Exception exception) when (
+                exception is OutOfMemoryException or
+                    System.Runtime.InteropServices.ExternalException or
+                    IOException or UnauthorizedAccessException or
+                    ArgumentException)
+            {
+                // 一张损坏或过大的图片不应中断整批；GDI+ 用 OutOfMemoryException 表示无法解码。
+                failures.Add(new ImageResizeFailure(
+                    sourcePath,
+                    exception is OutOfMemoryException
+                        ? "图片无法解码，或目标尺寸超出可用内存。"
+                        : exception.Message));
+            }
+        }
+
+        return new ImageResizeResult(outputs, failures);
+    }
+
+    private static string ResizeOne(
+        string sourcePath,
+        int width,
+        int height,
+        bool preserveAspectRatio)
+    {
+        string? outputPath = null;
+        try
+        {
             using var source = Image.FromFile(sourcePath);
+            ApplyExifOrientation(source);
             var directory = Path.Combine(
                 Path.GetDirectoryName(sourcePath)!,
                 "百宝袋_调整尺寸");
             Directory.CreateDirectory(directory);
-            var outputPath = GetAvailableOutputPath(
+            outputPath = GetAvailableOutputPath(
                 directory,
                 Path.GetFileName(sourcePath));
 
@@ -87,11 +124,60 @@ public sealed class ImageResizeService
                 : new Rectangle(0, 0, width, height);
             graphics.DrawImage(source, destination);
             Save(output, outputPath);
-            outputs.Add(outputPath);
+            return outputPath;
+        }
+        catch
+        {
+            // 不留下写了一半的输出文件。
+            if (outputPath is not null)
+            {
+                try
+                {
+                    File.Delete(outputPath);
+                }
+                catch (Exception exception) when (
+                    exception is IOException or UnauthorizedAccessException)
+                {
+                }
+            }
+
+            throw;
+        }
+    }
+
+    // 手机竖拍的照片像素本身是横的，靠 EXIF 方向标记旋转显示；
+    // 重新绘制会丢掉这个标记，所以先把像素转正。
+    private static void ApplyExifOrientation(Image image)
+    {
+        const int orientationId = 0x0112;
+        if (!image.PropertyIdList.Contains(orientationId))
+        {
+            return;
         }
 
-        return outputs;
+        var value = image.GetPropertyItem(orientationId)?.Value;
+        var flip = GetOrientationFlip(
+            value is { Length: >= 2 } ? BitConverter.ToUInt16(value, 0) : 1);
+        if (flip != RotateFlipType.RotateNoneFlipNone)
+        {
+            image.RotateFlip(flip);
+        }
+
+        image.RemovePropertyItem(orientationId);
     }
+
+    internal static RotateFlipType GetOrientationFlip(int orientation) =>
+        orientation switch
+        {
+            2 => RotateFlipType.RotateNoneFlipX,
+            3 => RotateFlipType.Rotate180FlipNone,
+            4 => RotateFlipType.Rotate180FlipX,
+            5 => RotateFlipType.Rotate90FlipX,
+            6 => RotateFlipType.Rotate90FlipNone,
+            7 => RotateFlipType.Rotate270FlipX,
+            8 => RotateFlipType.Rotate270FlipNone,
+            _ => RotateFlipType.RotateNoneFlipNone
+        };
 
     private static Rectangle CalculateFitRectangle(
         int sourceWidth,
@@ -150,3 +236,9 @@ public sealed class ImageResizeService
         throw new IOException("无法生成可用的输出文件名。");
     }
 }
+
+public sealed record ImageResizeResult(
+    IReadOnlyList<string> Outputs,
+    IReadOnlyList<ImageResizeFailure> Failures);
+
+public sealed record ImageResizeFailure(string Path, string Reason);

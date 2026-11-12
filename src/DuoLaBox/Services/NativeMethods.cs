@@ -35,6 +35,7 @@ internal static class NativeMethods
     internal const uint SwpNoSize = 0x0001;
     internal const uint SwpNoMove = 0x0002;
     internal const uint SwpNoActivate = 0x0010;
+    internal const uint SwpNoZOrder = 0x0004;
     internal const uint OcrNormal = 32512;
     internal const uint OcrIBeam = 32513;
     internal const uint OcrWait = 32514;

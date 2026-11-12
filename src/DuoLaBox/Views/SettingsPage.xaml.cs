@@ -18,6 +18,7 @@ public partial class SettingsPage : System.Windows.Controls.UserControl
         IsStartupBusy = busy;
         StartWithWindowsToggle.IsEnabled = !busy;
         SilentStartupToggle.IsEnabled = !busy;
+        ClearIntegrationsButton.IsEnabled = !busy;
     }
 
     public SettingsPage()
@@ -34,6 +35,8 @@ public partial class SettingsPage : System.Windows.Controls.UserControl
     public event Action<bool>? SilentStartupChanged;
 
     public event Action<AppTheme>? ThemeChanged;
+
+    public event Action? ClearIntegrationsRequested;
 
     public void LoadSettings(AppSettings settings)
     {
@@ -120,6 +123,16 @@ public partial class SettingsPage : System.Windows.Controls.UserControl
         }
 
         ThemeChanged?.Invoke(theme);
+    }
+
+    private void ClearIntegrationsButton_Click(
+        object sender,
+        RoutedEventArgs e)
+    {
+        if (!IsStartupBusy)
+        {
+            ClearIntegrationsRequested?.Invoke();
+        }
     }
 
     private void GithubButton_Click(

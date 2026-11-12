@@ -48,6 +48,8 @@ public sealed class TopMostMarkerManager : IDisposable
 
     public event Action<nint>? UnpinRequested;
 
+    public IReadOnlyList<nint> MarkedWindows => [.. _markers.Keys];
+
     public void AddMarker(nint targetHandle)
     {
         if (_markers.TryGetValue(targetHandle, out var existingMarker))

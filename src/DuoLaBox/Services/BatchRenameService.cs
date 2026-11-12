@@ -62,10 +62,11 @@ public sealed class BatchRenameService
         IReadOnlyList<RenamePreviewItem> plan)
     {
         var changes = plan
+            // 区分大小写比较：只改大小写（a.txt → A.txt）也是一次真实的重命名。
             .Where(item => !string.Equals(
                 item.SourcePath,
                 item.DestinationPath,
-                StringComparison.OrdinalIgnoreCase))
+                StringComparison.Ordinal))
             .Select(item => new StagedRename(
                 item.SourcePath,
                 Path.Combine(

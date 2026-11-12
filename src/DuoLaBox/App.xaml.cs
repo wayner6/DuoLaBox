@@ -69,7 +69,10 @@ public partial class App : System.Windows.Application
         _singleInstance = new SingleInstanceService();
         if (!_singleInstance.IsPrimary)
         {
-            var forwarded = await _singleInstance.ForwardArgumentsAsync(startupArguments);
+            // 资源管理器多选时会同时启动很多个进程，它们要排队等主实例逐个接收。
+            var forwarded = await _singleInstance.ForwardArgumentsAsync(
+                startupArguments,
+                timeoutMilliseconds: 15000);
             if (!forwarded)
             {
                 System.Windows.MessageBox.Show(
@@ -82,19 +85,23 @@ public partial class App : System.Windows.Application
             return;
         }
 
-        // 只有主实例执行：此时没有别的实例正在取色。
-        EyedropperCursorService.RecoverAfterAbnormalExit();
-        var window = new MainWindow();
-        MainWindow = window;
-        window.InitializeStartup();
+        // 先开始监听，再创建主窗口：后续实例不必等主窗口建好才能连上。
+        // 收到的参数排在界面线程队列里，本方法返回（窗口已就绪）之后才会执行。
+        MainWindow? window = null;
         _singleInstance.ArgumentsReceived += arguments =>
         {
             if (!Dispatcher.HasShutdownStarted)
             {
-                Dispatcher.BeginInvoke(() => window.HandleStartupArguments(arguments));
+                Dispatcher.BeginInvoke(() => window?.HandleStartupArguments(arguments));
             }
         };
         _singleInstance.StartListening();
+
+        // 只有主实例执行：此时没有别的实例正在取色。
+        EyedropperCursorService.RecoverAfterAbnormalExit();
+        window = new MainWindow();
+        MainWindow = window;
+        window.InitializeStartup();
         _startupCompleted = true;
 
         var silentArgument = startupArguments.Any(argument =>
@@ -106,10 +113,7 @@ public partial class App : System.Windows.Application
                 string.Equals(
                     argument,
                     "--show",
-                    StringComparison.OrdinalIgnoreCase)) ||
-            Environment.CommandLine.Contains(
-                "--show",
-                StringComparison.OrdinalIgnoreCase);
+                    StringComparison.OrdinalIgnoreCase));
         if (forceShow)
         {
             window.Show();
@@ -117,10 +121,9 @@ public partial class App : System.Windows.Application
             return;
         }
 
+        // 静默只来自开机启动项写入的 --silent；用户手动打开时始终显示窗口。
         var silentStartup =
-            (silentArgument ||
-             (startupArguments.Length == 0 &&
-              window.SilentStartupEnabled)) &&
+            silentArgument &&
             !startupArguments.Any(argument =>
                 string.Equals(
                     argument,

@@ -142,9 +142,63 @@ public partial class FileBatchPage
             stream,
             BitmapCreateOptions.PreservePixelFormat,
             BitmapCacheOption.OnLoad);
-        var frame = decoder.Frames[0];
+        BitmapSource frame = decoder.Frames[0];
+        var transform = GetOrientationTransform(ReadOrientation(frame));
+        if (transform is not null)
+        {
+            // 与输出一致：按 EXIF 方向把竖拍照片转正后再预览和读取尺寸。
+            frame = new TransformedBitmap(frame, transform);
+        }
+
         frame.Freeze();
         return frame;
+    }
+
+    private static int ReadOrientation(BitmapSource frame)
+    {
+        try
+        {
+            return frame.Metadata is BitmapMetadata metadata &&
+                   metadata.GetQuery("/app1/ifd/{ushort=274}") is ushort value
+                ? value
+                : 1;
+        }
+        catch (Exception exception) when (
+            exception is NotSupportedException or InvalidOperationException or
+                ArgumentException or System.Runtime.InteropServices.COMException)
+        {
+            // PNG、BMP 等格式没有这个元数据路径。
+            return 1;
+        }
+    }
+
+    internal static Transform? GetOrientationTransform(int orientation)
+    {
+        var (angle, mirror) = orientation switch
+        {
+            2 => (0, true),
+            3 => (180, false),
+            4 => (180, true),
+            5 => (90, true),
+            6 => (90, false),
+            7 => (270, true),
+            8 => (270, false),
+            _ => (0, false)
+        };
+        if (angle == 0 && !mirror)
+        {
+            return null;
+        }
+
+        // 与 GDI+ 的 RotateFlipType 相同的顺序：先旋转，再水平翻转。
+        var group = new TransformGroup();
+        group.Children.Add(new RotateTransform(angle));
+        if (mirror)
+        {
+            group.Children.Add(new ScaleTransform(-1, 1));
+        }
+
+        return group;
     }
 
     private void ClearImagePreview()
@@ -189,10 +243,24 @@ public partial class FileBatchPage
                 return;
             }
 
-            var outputs = await _imageResizeService.ResizeAsync(
+            var result = await _imageResizeService.ResizeAsync(
                 files, width, height, preserveAspectRatio);
-            StatusText.Text =
-                $"已处理 {outputs.Count} 张图片，原图保持不变。";
+            StatusText.Text = result.Failures.Count == 0
+                ? $"已处理 {result.Outputs.Count} 张图片，原图保持不变。"
+                : $"已处理 {result.Outputs.Count} 张图片，{result.Failures.Count} 张失败，原图保持不变。";
+            if (result.Failures.Count > 0)
+            {
+                var details = string.Join(
+                    Environment.NewLine,
+                    result.Failures.Take(8).Select(failure =>
+                        $"{Path.GetFileName(failure.Path)}：{failure.Reason}"));
+                ShowError(
+                    $"{result.Failures.Count} 张图片未能处理：" +
+                    Environment.NewLine + Environment.NewLine + details +
+                    (result.Failures.Count > 8
+                        ? Environment.NewLine + "……"
+                        : string.Empty));
+            }
         });
     }
 

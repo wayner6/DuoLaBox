@@ -78,7 +78,27 @@ public sealed class AppSettingsService
         }
         catch
         {
+            // 下一次保存会覆盖 settings.json；先把读不出来的文件留一份。
+            PreserveUnreadableSettings();
             return new AppSettings();
+        }
+    }
+
+    private void PreserveUnreadableSettings()
+    {
+        try
+        {
+            if (File.Exists(_settingsPath))
+            {
+                File.Copy(
+                    _settingsPath,
+                    _settingsPath + ".unreadable.bak",
+                    overwrite: true);
+            }
+        }
+        catch
+        {
+            // 备份失败不影响以默认设置启动。
         }
     }
 

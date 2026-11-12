@@ -17,11 +17,12 @@ public sealed class AppSettings
 
     public bool ExplorerContextMenusEnabled { get; set; } = true;
 
-    public bool RenameContextMenuEnabled { get; set; } = true;
+    // 默认关闭：写入资源管理器右键菜单需要用户自己打开。
+    public bool RenameContextMenuEnabled { get; set; }
 
-    public bool UnlockContextMenuEnabled { get; set; } = true;
+    public bool UnlockContextMenuEnabled { get; set; }
 
-    public bool ResizeContextMenuEnabled { get; set; } = true;
+    public bool ResizeContextMenuEnabled { get; set; }
 
     public AppTheme Theme { get; set; } = AppTheme.FollowSystem;
 

@@ -29,7 +29,8 @@ public partial class FileBatchPage : WpfControls.UserControl
     private bool _unlockContextMenuEnabled;
     private bool _resizeContextMenuEnabled;
     private TaskCompletionSource<bool>? _confirmCompletion;
-    private readonly Queue<(FileToolMode Mode, string[] Paths)> _pendingOpenRequests = new();
+    private const int PendingPathLimit = 10000;
+    private readonly List<(FileToolMode Mode, List<string> Paths)> _pendingOpenRequests = [];
     private bool _isBusy;
 
     internal bool IsBusy => _isBusy;
@@ -68,13 +69,21 @@ public partial class FileBatchPage : WpfControls.UserControl
     {
         if (_isBusy)
         {
-            // ponytail: at most 64 pending requests; coalesce by mode if larger shell batches are needed.
-            if (_pendingOpenRequests.Count >= 64)
+            // 资源管理器多选时每个文件各发来一次请求；同一功能的连续请求合并成一批。
+            var incoming = paths.ToArray();
+            if (_pendingOpenRequests.Sum(request => request.Paths.Count) + incoming.Length > PendingPathLimit)
             {
-                StatusText.Text = "待添加文件的请求队列已满，请完成当前操作后重新添加。";
+                StatusText.Text = "待添加的文件过多，请完成当前操作后重新添加。";
                 return;
             }
-            _pendingOpenRequests.Enqueue((mode, paths.ToArray()));
+            if (_pendingOpenRequests.Count > 0 && _pendingOpenRequests[^1].Mode == mode)
+            {
+                _pendingOpenRequests[^1].Paths.AddRange(incoming);
+            }
+            else
+            {
+                _pendingOpenRequests.Add((mode, [.. incoming]));
+            }
             StatusText.Text = "当前操作尚未完成，收到的文件已排队，完成或取消后自动添加。";
             return;
         }
@@ -374,8 +383,10 @@ public partial class FileBatchPage : WpfControls.UserControl
             ModeButtonsPanel.IsEnabled = true;
             FileSelectionPanel.IsEnabled = true;
             FileOperationsPanel.IsEnabled = true;
-            while (!_isBusy && _pendingOpenRequests.TryDequeue(out var request))
+            while (!_isBusy && _pendingOpenRequests.Count > 0)
             {
+                var request = _pendingOpenRequests[0];
+                _pendingOpenRequests.RemoveAt(0);
                 Open(request.Mode, request.Paths);
             }
         }

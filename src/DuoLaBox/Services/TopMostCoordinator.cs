@@ -42,6 +42,12 @@ public sealed class TopMostCoordinator : IDisposable
 
     public void Dispose()
     {
+        // 退出后没有标记也没有取消入口，由 DuoLaBox 置顶的窗口一并恢复。
+        foreach (var handle in _markerManager.MarkedWindows)
+        {
+            _windowService.SetTopMost(handle, topMost: false);
+        }
+
         _markerManager.UnpinRequested -= MarkerManager_UnpinRequested;
         _markerManager.Dispose();
     }

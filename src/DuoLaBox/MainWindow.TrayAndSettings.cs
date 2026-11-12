@@ -170,6 +170,71 @@ public partial class MainWindow
         }
     }
 
+    private async void SettingsPage_ClearIntegrationsRequested()
+    {
+        if (_exitRequested || SettingsPage.IsStartupBusy ||
+            FileBatchPage.AreContextMenusBusy)
+        {
+            return;
+        }
+
+        if (System.Windows.MessageBox.Show(
+                this,
+                "将移除 DuoLaBox 写入系统的内容：资源管理器右键菜单和开机启动项。" +
+                "应用设置、收藏的颜色和清理库不受影响。是否继续？",
+                AppIdentity.Name,
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Question) != MessageBoxResult.Yes)
+        {
+            return;
+        }
+
+        SettingsPage.SetStartupBusy(true);
+        FileBatchPage.SetContextMenusBusy(true);
+        try
+        {
+            var cleared = await UpdateExternalIntegrationAsync(() =>
+                _settingsService.ConfigureStartup(enabled: false) &
+                _shellContextMenuService.Configure(FileToolMode.Rename, false) &
+                _shellContextMenuService.Configure(FileToolMode.Unlock, false) &
+                _shellContextMenuService.Configure(FileToolMode.ResizeImages, false));
+            if (_exitRequested)
+            {
+                return;
+            }
+
+            if (!cleared)
+            {
+                System.Windows.MessageBox.Show(
+                    this,
+                    "部分内容未能移除，请检查当前用户的注册表权限后重试。",
+                    AppIdentity.Name,
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Warning);
+                return;
+            }
+
+            _settings.StartWithWindows = false;
+            _settings.RenameContextMenuEnabled = false;
+            _settings.UnlockContextMenuEnabled = false;
+            _settings.ResizeContextMenuEnabled = false;
+            SaveSettings();
+            SettingsPage.SetStartWithWindows(false);
+            FileBatchPage.LoadContextMenuSettings(_settings);
+            System.Windows.MessageBox.Show(
+                this,
+                "已移除右键菜单和开机启动项。",
+                AppIdentity.Name,
+                MessageBoxButton.OK,
+                MessageBoxImage.Information);
+        }
+        finally
+        {
+            SettingsPage.SetStartupBusy(false);
+            FileBatchPage.SetContextMenusBusy(false);
+        }
+    }
+
     private void TrayIcon_ShowRequested()
     {
         ShowFromTray();

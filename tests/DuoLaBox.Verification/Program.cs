@@ -57,7 +57,7 @@ try
         200,
         200,
         preserveAspectRatio: true);
-    using (var resized = Image.FromFile(outputs.Single()))
+    using (var resized = Image.FromFile(outputs.Outputs.Single()))
     {
         Assert(
             resized.Width == 200 && resized.Height == 200,
@@ -70,7 +70,7 @@ try
         200,
         preserveAspectRatio: false);
     Assert(
-        secondOutputs.Single() != outputs.Single(),
+        secondOutputs.Outputs.Single() != outputs.Outputs.Single(),
         "重复处理图片时覆盖了已有输出");
 
     var favoriteColor = new FavoriteColorItem("#1689D8");

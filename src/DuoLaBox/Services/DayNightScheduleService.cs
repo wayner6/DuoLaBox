@@ -12,6 +12,7 @@ public sealed class DayNightScheduleService : IDisposable
     private TimeSpan _darkModeStart;
     private TimeSpan _lightModeStart;
     private int _isApplying;
+    private bool? _lastScheduledMode;
 
     public DayNightScheduleService(
         SystemThemeModeService themeModeService)
@@ -30,6 +31,8 @@ public sealed class DayNightScheduleService : IDisposable
         _darkModeStart = settings.DarkModeStartTime;
         _lightModeStart = settings.LightModeStartTime;
 
+        // 设置变化或启动时按当前时段对齐一次；之后只在时段切换的时刻生效。
+        _lastScheduledMode = null;
         if (!_enabled)
         {
             _timer.Stop();
@@ -64,10 +67,16 @@ public sealed class DayNightScheduleService : IDisposable
                 DateTime.Now.TimeOfDay,
                 _darkModeStart,
                 _lightModeStart);
-            if (_themeModeService.IsDarkMode != shouldBeDark)
+            // 同一时段内不重复应用，用户在两次切换之间的手动选择得以保留。
+            if (_lastScheduledMode == shouldBeDark)
             {
-                await _themeModeService.SetDarkModeAsync(
-                    shouldBeDark);
+                return;
+            }
+
+            if (_themeModeService.IsDarkMode == shouldBeDark ||
+                await _themeModeService.SetDarkModeAsync(shouldBeDark))
+            {
+                _lastScheduledMode = shouldBeDark;
             }
         }
         finally
@@ -76,7 +85,7 @@ public sealed class DayNightScheduleService : IDisposable
         }
     }
 
-    private static bool IsWithinDarkPeriod(
+    internal static bool IsWithinDarkPeriod(
         TimeSpan current,
         TimeSpan darkStart,
         TimeSpan lightStart)
